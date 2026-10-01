@@ -17,10 +17,24 @@ class Server:
     def __init__(self, world=None) -> None:
         self.world = world or WorldModel()
         self.clients = set()
-        self.intents = set()
+        self.intents = {}  # player_id -> set of action strings
+        self._next_player_id = 0
+
+    def new_player_id(self) -> str:
+        """
+        This function allocate a unique player id for a new connection.
+        :return: A unique player id
+        """
+        player_id = str(self._next_player_id)
+        self._next_player_id += 1
+
+        return player_id
 
     async def handle_client(self, reader, writer) -> None:
         self.clients.add(writer)
+        player_id = self.new_player_id()
+        self.world.add_player(player_id)
+        self.intents[player_id] = set()
 
         try:
             await self.send(writer, protocol.make_snapshot(self.world.snapshot()))
@@ -35,11 +49,13 @@ class Server:
 
                 for message in messages:
                     if message["type"] == protocol.MSG_INTENT:
-                        self.intents.update(message["intents"])
+                        self.intents[player_id] = set(message["intents"])
         except (ConnectionResetError, asyncio.IncompleteReadError):
             pass
         finally:
             self.clients.discard(writer)
+            self.world.remove_player(player_id)
+            self.intents.pop(player_id, None)
             writer.close()
 
     async def send(self, writer, message) -> None:
@@ -57,8 +73,8 @@ class Server:
                 self.clients.discard(writer)
 
     async def tick(self) -> None:
-        self.world.step(TICK_DT, self.intents)
-        self.intents = set()
+        self.world.step_players(TICK_DT, self.intents)
+        self.intents = {player_id: set() for player_id in self.intents}
         await self.broadcast(protocol.make_snapshot(self.world.snapshot()))
 
     async def run(self, host=s.NET_HOST, port=s.NET_PORT) -> None:

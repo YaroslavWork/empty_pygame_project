@@ -29,6 +29,23 @@ def test_app_wires_models_and_views(app):
     assert isinstance(app.field_view, FieldView)
 
 
+def test_app_creates_a_local_player(app):
+    assert list(app.world.players) == ["0"]
+
+
+def test_app_does_not_create_a_player_for_remote_clients():
+    class NullClient(Client):
+        def update(self, dt, intents):
+            return None
+
+        def close(self):
+            pass
+
+    app = App(client=NullClient())
+
+    assert app.world.players == {}
+
+
 def test_app_uses_a_local_client_by_default(app):
     assert isinstance(app.client, Client)
     assert isinstance(app.client, LocalClient)
@@ -66,28 +83,35 @@ def test_collect_intents_empty_without_keys(app):
     assert app.collect_intents() == set()
 
 
-def test_physics_moves_camera_left(app):
+def test_physics_moves_player_left(app):
     app.dt = 1000
-    app.camera_model.distance = 10
-    app.camera_model.x = 5
     app.keys = FakeKeys([pygame.K_a])
     app.intents = app.collect_intents()
+    before = app.world.players["0"].x
 
     app.update_physics()
 
-    assert app.camera_model.x < 5
+    assert app.world.players["0"].x < before
 
 
-def test_physics_moves_camera_right(app):
+def test_physics_moves_player_right(app):
     app.dt = 1000
-    app.camera_model.distance = 10
-    app.camera_model.x = 5
     app.keys = FakeKeys([pygame.K_d])
     app.intents = app.collect_intents()
 
     app.update_physics()
 
-    assert app.camera_model.x == pytest.approx(15)
+    assert app.world.players["0"].x == pytest.approx(1)
+
+
+def test_physics_does_not_move_camera_with_wasd(app):
+    app.dt = 1000
+    app.keys = FakeKeys([pygame.K_d])
+    app.intents = app.collect_intents()
+
+    app.update_physics()
+
+    assert app.camera_model.x == 0
 
 
 def test_physics_does_not_move_without_keys(app):
@@ -120,7 +144,8 @@ def test_physics_applies_snapshot_from_client():
     class NullClient(Client):
         def update(self, dt, intents):
             return {"camera": {"x": 42, "y": 0, "distance": 5, "resolution": [1080, 720]},
-                    "field": {}}
+                    "field": {},
+                    "players": {"7": {"x": 1, "y": 2, "color": [10, 20, 30], "size": 2}}}
 
         def close(self):
             pass
@@ -133,6 +158,26 @@ def test_physics_applies_snapshot_from_client():
 
     assert app.camera_model.x == 42
     assert app.camera_model.distance == 5
+    assert list(app.world.players) == ["7"]
+
+
+def test_physics_keeps_local_resolution():
+    class NullClient(Client):
+        def update(self, dt, intents):
+            return {"camera": {"x": 0, "y": 0, "distance": 5, "resolution": [640, 480]},
+                    "field": {},
+                    "players": {}}
+
+        def close(self):
+            pass
+
+    app = App(client=NullClient())
+    app.dt = 1000
+    app.intents = set()
+
+    app.update_physics()
+
+    assert app.camera_model.resolution == tuple(app.size)
 
 
 def test_physics_ignores_none_snapshot():
@@ -151,6 +196,24 @@ def test_physics_ignores_none_snapshot():
     app.update_physics()
 
     assert app.camera_model.x == 7
+
+
+def test_draw_players_builds_views(app, screen):
+    app.screen = screen
+
+    app.draw_players()
+
+    assert set(app.player_views) == set(app.world.players)
+
+
+def test_draw_players_removes_missing_views(app, screen):
+    app.screen = screen
+    app.draw_players()
+    app.world.remove_player(0)
+
+    app.draw_players()
+
+    assert app.player_views == {}
 
 
 def test_update_runs_all_blocks(app):

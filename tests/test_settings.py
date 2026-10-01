@@ -52,3 +52,10 @@ def test_net_settings_exist():
     assert s.NET_HOST
     assert 0 < s.NET_PORT < 65536
     assert s.NET_BUFFER_SIZE > 0
+
+
+def test_player_settings_exist():
+    assert isinstance(s.PLAYER_START_X, (int, float))
+    assert isinstance(s.PLAYER_START_Y, (int, float))
+    assert s.PLAYER_MOVE_SPEED > 0
+    assert s.PLAYER_SIZE > 0

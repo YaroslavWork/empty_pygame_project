@@ -76,6 +76,11 @@ Rules I follow when editing this project. Keep them in sync with the codebase.
 - Networking: `App` talks to a `scripts.net.client.Client` (`LocalClient` for
   singleplayer, `NetClient` over TCP). The server owns the authoritative
   `WorldModel`; clients send intents and apply snapshots.
+- Players: `scripts/player/PlayerModel` (state + math, random color, no pygame)
+  and `PlayerView` (draws a rectangle). `WASD` moves the player; `Q` / `E` zoom
+  the camera. Solo has one local player; online the server keeps one player per
+  connection and broadcasts every player in the snapshot. Player ids are strings
+  so they survive the JSON round trip.
 
 ## Workflow
 

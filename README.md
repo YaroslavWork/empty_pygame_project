@@ -53,6 +53,32 @@ Host, port and buffer size come from `scripts/settings.py` (`NET_HOST`,
 `"right"`, `"up"`, `"down"`, `"zoom_in"`, `"zoom_out"`) sent as length-prefixed
 JSON frames.
 
+Every connection gets its own player: the server keeps a player per client and
+broadcasts all of them in the snapshot, so both windows see each other's
+rectangles move independently. The camera stays shared and `Q` / `E` zoom it.
+Players are removed from the world when a client disconnects.
+
+### Two windows on one machine
+
+Run the server and two clients in three terminals:
+
+```bash
+# terminal 1 — authoritative server
+.venv/bin/python main.py --server
+
+# terminal 2 — first client
+.venv/bin/python main.py --connect 127.0.0.1:5000
+
+# terminal 3 — second client
+.venv/bin/python main.py --connect 127.0.0.1:5000
+```
+
+Two windows open, each showing a differently-coloured player rectangle. Move
+with `WASD` in one window and you will see the other window update that
+rectangle in real time — that is the server relaying both players. (Each client
+is a full pygame window; run them as separate OS processes, not threads, so each
+owns its own event loop and display.)
+
 ## Settings
 
 All tunables and static values live in `scripts/settings.py`: window size and
@@ -62,14 +88,15 @@ There are no magic numbers in feature code — change behavior through settings.
 
 ## Controls
 
-The empty camera already supports navigation, so you can see the structure work:
+`WASD` moves **your player** (a random-coloured rectangle); `Q` / `E` zoom the
+camera. Your player is the same entity solo and online.
 
 | Key | Action |
 |-----|--------|
-| `W` / `↑` | Pan up |
-| `S` / `↓` | Pan down |
-| `A` / `←` | Pan left |
-| `D` / `→` | Pan right |
+| `W` / `↑` | Move player up |
+| `S` / `↓` | Move player down |
+| `A` / `←` | Move player left |
+| `D` / `→` | Move player right |
 | `E` | Zoom in |
 | `Q` | Zoom out |
 
@@ -81,7 +108,7 @@ own package folder.
 ```
 main.py                  entry point, runs the App loop (--server / --connect)
 scripts/
-  settings.py            window, colors, camera/HUD/scale, network defaults
+  settings.py            window, colors, player/camera/HUD/scale, network defaults
   app.py                 App: orchestrates the frame, talks to a Client
   world.py               WorldModel — owns the models, step/snapshot (no pygame)
   camera/
@@ -90,6 +117,9 @@ scripts/
   field/
     model.py             FieldModel   — game world state (no pygame)
     view.py              FieldView    — draws the world
+  player/
+    model.py             PlayerModel  — position, random color, movement (no pygame)
+    view.py              PlayerView   — draws a player rectangle
   net/
     protocol.py          length-prefixed JSON framing
     client.py            Client / LocalClient / NetClient
@@ -133,7 +163,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-90 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+120 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

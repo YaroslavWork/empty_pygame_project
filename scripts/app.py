@@ -4,6 +4,7 @@ import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldView
 from scripts.net.client import Client, LocalClient
+from scripts.player import PlayerView
 from scripts.UI.text import TextView
 from scripts.world import WorldModel
 
@@ -41,9 +42,14 @@ class App:
         # Set client (singleplayer uses an in-process world)
         self.client = client or LocalClient(self.world)
 
+        # Singleplayer owns one local player; multiplayer receives players via snapshots
+        if isinstance(self.client, LocalClient):
+            self.world.add_player("0")
+
         # Set view variables
         self.camera_view = CameraView(self.camera_model)
         self.field_view = FieldView(self.field_model)
+        self.player_views = {}
 
     def update(self) -> None:
         """
@@ -84,6 +90,7 @@ class App:
         """
         Input block.
         Converts the pressed keys into a set of input intents.
+        WASD moves the player, Q/E zoom the camera.
         """
         intents = set()
 
@@ -111,6 +118,7 @@ class App:
 
         if snapshot is not None:
             self.world.apply_snapshot(snapshot)
+            self.camera_model.resolution = tuple(self.size)  # Keep the local window resolution
 
     def render(self) -> None:
         """
@@ -120,6 +128,7 @@ class App:
         self.screen.fill(self.colors['background'])  # Fill background
 
         self.field_view.draw(self.screen, self.camera_model)
+        self.draw_players()
 
         self.camera_view.draw_map_scale(self.screen, offset=s.HUD_SCALE_OFFSET)  # Draw map scale
         fps_text = "FPS: " + str(int(self.clock.get_fps()))
@@ -127,6 +136,21 @@ class App:
             self.screen,
             (self.width - s.HUD_FPS_MARGIN[0], self.height - s.HUD_FPS_MARGIN[1]),
             False)  # FPS counter
+
+    def draw_players(self) -> None:
+        """
+        Rendering block.
+        Synchronizes player views with the world players and draws each of them.
+        """
+        for player_id in list(self.player_views):
+            if player_id not in self.world.players:
+                del self.player_views[player_id]
+
+        for player_id, player_model in self.world.players.items():
+            if player_id not in self.player_views:
+                self.player_views[player_id] = PlayerView(player_model)
+
+            self.player_views[player_id].draw(self.screen, self.camera_model)
 
     def update_display(self) -> None:
         """

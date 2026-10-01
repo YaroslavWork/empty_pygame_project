@@ -7,7 +7,9 @@ from scripts.world import WorldModel
 
 def make_world(x=0, y=0, distance=10, resolution=(1000, 500)):
     camera = CameraModel(x=x, y=y, distance=distance, resolution=resolution)
-    return WorldModel(camera_model=camera)
+    world = WorldModel(camera_model=camera)
+    world.add_player("0")
+    return world
 
 
 def test_local_client_is_a_client():
@@ -15,22 +17,24 @@ def test_local_client_is_a_client():
 
 
 def test_local_client_update_steps_world():
-    client = LocalClient(make_world(x=5, distance=10))
+    world = make_world(x=5, distance=10)
+    client = LocalClient(world)
 
     client.update(1000, ["right"])
 
-    assert client.world.camera_model.x == pytest.approx(15)
+    assert world.players["0"].x == pytest.approx(1)
 
 
 def test_local_client_update_returns_world_snapshot():
-    client = LocalClient(make_world(x=1, y=2, distance=3, resolution=(800, 600)))
+    world = make_world(x=1, y=2, distance=3, resolution=(800, 600))
+    world.players["0"].color = (10, 20, 30)
+    client = LocalClient(world)
 
     snapshot = client.update(0, [])
 
-    assert snapshot == {
-        "camera": {"x": 1, "y": 2, "distance": 3, "resolution": [800, 600]},
-        "field": {},
-    }
+    assert snapshot["camera"] == {"x": 1, "y": 2, "distance": 3, "resolution": [800, 600]}
+    assert snapshot["field"] == {}
+    assert snapshot["players"] == {"0": {"x": 0, "y": 0, "color": [10, 20, 30], "size": 2}}
 
 
 def test_local_client_close_is_a_noop():
