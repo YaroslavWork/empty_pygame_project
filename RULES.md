@@ -23,6 +23,19 @@ Rules I follow when editing this project. Keep them in sync with the codebase.
 - Two blank lines between top-level classes/functions; imports grouped
   `pygame` / project.
 
+## Settings
+
+- `scripts/settings.py` is the single source of truth for tunables and static
+  values (window, colors, camera defaults, HUD/scale UI, network host/port).
+  Import it as `from scripts import settings as s` and reference `s.NAME`.
+- No magic numbers or hardcoded strings in feature code — add a named constant
+  to `settings.py` and use it. `*Model` may import `settings` (it holds no
+  pygame), so shared defaults like camera start values come from there.
+- Genuinely wire-level constants stay in their package (`PROTOCOL_VERSION` /
+  `HEADER_SIZE` in `net/protocol.py`, `TICK_RATE` in `net/server.py`); only the
+  shared host/port/buffer come from `settings.py`.
+- Add or extend tests in `tests/test_settings.py` when you add settings.
+
 ## Architecture
 
 - Follow the existing model/view split. Data model (`*Model`) has no pygame and

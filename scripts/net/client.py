@@ -1,5 +1,6 @@
 import socket
 
+from scripts import settings as s
 from scripts.net import protocol
 
 
@@ -40,7 +41,7 @@ class NetClient(Client):
     Sends intents and receives the latest world snapshot.
     """
 
-    def __init__(self, host, port) -> None:
+    def __init__(self, host=s.NET_HOST, port=s.NET_PORT) -> None:
         self.socket = socket.create_connection((host, port))
         self.socket.setblocking(False)
         self.buffer = b""
@@ -52,7 +53,7 @@ class NetClient(Client):
 
     def receive_snapshot(self):
         try:
-            data = self.socket.recv(4096)
+            data = self.socket.recv(s.NET_BUFFER_SIZE)
         except BlockingIOError:
             return self.latest_snapshot
 

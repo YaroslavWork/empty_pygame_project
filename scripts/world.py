@@ -1,8 +1,6 @@
+from scripts import settings as s
 from scripts.camera import CameraModel
 from scripts.field import FieldModel
-
-MOVE_SPEED = 1
-ZOOM_SPEED = 1
 
 
 class WorldModel:
@@ -13,7 +11,11 @@ class WorldModel:
     """
 
     def __init__(self, camera_model=None, field_model=None) -> None:
-        self.camera_model = camera_model or CameraModel(x=0, y=0, distance=10)
+        self.camera_model = camera_model or CameraModel(
+            x=s.CAMERA_START_X,
+            y=s.CAMERA_START_Y,
+            distance=s.CAMERA_START_DISTANCE,
+        )
         self.field_model = field_model or FieldModel()
 
     def step(self, dt, intents) -> None:
@@ -26,17 +28,17 @@ class WorldModel:
         intents = set(intents)
 
         if "left" in intents:
-            self.camera_model.move_left(MOVE_SPEED, dt)
+            self.camera_model.move_left(s.CAMERA_MOVE_SPEED, dt)
         if "right" in intents:
-            self.camera_model.move_right(MOVE_SPEED, dt)
+            self.camera_model.move_right(s.CAMERA_MOVE_SPEED, dt)
         if "up" in intents:
-            self.camera_model.move_up(MOVE_SPEED, dt)
+            self.camera_model.move_up(s.CAMERA_MOVE_SPEED, dt)
         if "down" in intents:
-            self.camera_model.move_down(MOVE_SPEED, dt)
+            self.camera_model.move_down(s.CAMERA_MOVE_SPEED, dt)
         if "zoom_in" in intents:
-            self.camera_model.scale_in(ZOOM_SPEED, dt)
+            self.camera_model.scale_in(s.CAMERA_ZOOM_SPEED, dt)
         if "zoom_out" in intents:
-            self.camera_model.scale_out(ZOOM_SPEED, dt)
+            self.camera_model.scale_out(s.CAMERA_ZOOM_SPEED, dt)
 
     def snapshot(self) -> dict:
         """

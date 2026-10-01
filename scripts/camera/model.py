@@ -1,3 +1,6 @@
+from scripts import settings as s
+
+
 class CameraModel:
     """
     Data model of the camera.
@@ -5,11 +8,11 @@ class CameraModel:
     It represents where the camera looks and how the world is scaled.
     """
 
-    def __init__(self, x, y, distance, resolution=(640, 480)) -> None:
+    def __init__(self, x, y, distance, resolution=None) -> None:
         self.x = x
         self.y = y
         self.distance = distance  # Distance for width (in meters)
-        self.resolution = resolution
+        self.resolution = tuple(resolution) if resolution else tuple(s.SIZE)
 
     def get_local_point(self, global_x, global_y) -> tuple:
         """

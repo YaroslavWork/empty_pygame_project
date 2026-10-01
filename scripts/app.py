@@ -33,7 +33,8 @@ class App:
         self.intents = set()
 
         # Set model variables
-        self.world = WorldModel(camera_model=CameraModel(x=0, y=0, distance=10, resolution=self.size))
+        self.world = WorldModel(camera_model=CameraModel(x=s.CAMERA_START_X, y=s.CAMERA_START_Y,
+                                                         distance=s.CAMERA_START_DISTANCE, resolution=self.size))
         self.camera_model = self.world.camera_model
         self.field_model = self.world.field_model
 
@@ -120,10 +121,12 @@ class App:
 
         self.field_view.draw(self.screen, self.camera_model)
 
-        self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
-        TextView("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
-                                                                            (self.width - 70, self.height - 21),
-                                                                            False)  # FPS counter
+        self.camera_view.draw_map_scale(self.screen, offset=s.HUD_SCALE_OFFSET)  # Draw map scale
+        fps_text = "FPS: " + str(int(self.clock.get_fps()))
+        TextView(fps_text, self.colors['text'], s.HUD_FONT_SIZE).print(
+            self.screen,
+            (self.width - s.HUD_FPS_MARGIN[0], self.height - s.HUD_FPS_MARGIN[1]),
+            False)  # FPS counter
 
     def update_display(self) -> None:
         """

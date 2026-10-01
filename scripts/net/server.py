@@ -1,5 +1,6 @@
 import asyncio
 
+from scripts import settings as s
 from scripts.net import protocol
 from scripts.world import WorldModel
 
@@ -25,7 +26,7 @@ class Server:
             await self.send(writer, protocol.make_snapshot(self.world.snapshot()))
 
             while True:
-                data = await reader.read(4096)
+                data = await reader.read(s.NET_BUFFER_SIZE)
 
                 if not data:
                     break
@@ -60,7 +61,7 @@ class Server:
         self.intents = set()
         await self.broadcast(protocol.make_snapshot(self.world.snapshot()))
 
-    async def run(self, host="127.0.0.1", port=5000) -> None:
+    async def run(self, host=s.NET_HOST, port=s.NET_PORT) -> None:
         self._server = await asyncio.start_server(self.handle_client, host, port)
 
         async with self._server:
@@ -79,7 +80,7 @@ class Server:
         return self._server.sockets[0].getsockname()[1]
 
 
-def run(host="127.0.0.1", port=5000) -> None:
+def run(host=s.NET_HOST, port=s.NET_PORT) -> None:
     """
     This function run the server until interrupted (blocking).
     :param host: Host to bind

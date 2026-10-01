@@ -2,15 +2,17 @@
 
 import argparse
 
+from scripts import settings as s
 from scripts.app import App
 from scripts.net.client import NetClient
 from scripts.net.server import run as run_server
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Empty Pygame Project")
+    parser = argparse.ArgumentParser(description=s.NAME)
     parser.add_argument("--server", action="store_true", help="run the game server")
-    parser.add_argument("--connect", metavar="HOST:PORT", help="join a server (ex. 127.0.0.1:5000)")
+    parser.add_argument("--connect", metavar="HOST:PORT",
+                        help="join a server (ex. {0}:{1})".format(s.NET_HOST, s.NET_PORT))
 
     return parser.parse_args()
 

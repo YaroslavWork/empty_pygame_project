@@ -1,5 +1,6 @@
 import pygame
 
+from scripts import settings as s
 from scripts.camera.model import CameraModel
 from scripts.UI.text import TextView
 
@@ -15,8 +16,9 @@ class CameraView:
     def __init__(self, model: CameraModel) -> None:
         self.model = model
 
-    def get_scale_value(self, min_pixels_scale=50, max_pixels_scale=200,
-                        first_digital=(1, 2, 5)) -> float:
+    def get_scale_value(self, min_pixels_scale=s.SCALE_MIN_PIXELS,
+                        max_pixels_scale=s.SCALE_MAX_PIXELS,
+                        first_digital=s.SCALE_FIRST_DIGITAL) -> float:
         """
         This function calculate the closest "nice" distance (in meters)
         for the map scale based on the current camera zoom.
@@ -42,8 +44,11 @@ class CameraView:
         return close_digit
 
     # This function draw map scale on the screen (the part of UI)
-    def draw_map_scale(self, screen, min_pixels_scale=50, max_pixels_scale=200,
-                       first_digital=(1, 2, 5), offset=(60, 10), stick_width=5) -> None:
+    def draw_map_scale(self, screen, min_pixels_scale=s.SCALE_MIN_PIXELS,
+                       max_pixels_scale=s.SCALE_MAX_PIXELS,
+                       first_digital=s.SCALE_FIRST_DIGITAL,
+                       offset=s.SCALE_OFFSET,
+                       stick_width=s.SCALE_STICK_WIDTH) -> None:
         """
         This function draw map scale on the screen (the part of UI)
         :param screen: Screen for drawing
@@ -56,6 +61,7 @@ class CameraView:
         """
         resolution = self.model.resolution
         distance = self.model.distance
+        color = s.COLORS["scale"]
 
         # Calculate the closest digit for the current zoom level
         close_digit = self.get_scale_value(min_pixels_scale, max_pixels_scale, first_digital)
@@ -68,21 +74,20 @@ class CameraView:
         right_pos = (resolution[0] - offset[0], resolution[1] - offset[1])
 
         # Draw lines
-        pygame.draw.line(screen, (0, 0, 0), left_pos, right_pos, 2)
+        pygame.draw.line(screen, color, left_pos, right_pos, s.SCALE_LINE_WIDTH)
         pygame.draw.line(screen,
-                         (0, 0, 0),
+                         color,
                          (left_pos[0], left_pos[1] - stick_width),
                          (left_pos[0], left_pos[1] + stick_width),
-                         2)
-        pygame.draw.line(screen, (0, 0, 0),
+                         s.SCALE_LINE_WIDTH)
+        pygame.draw.line(screen, color,
                          (right_pos[0], right_pos[1] + stick_width),
                          (right_pos[0], right_pos[1] - stick_width),
-                         2)
+                         s.SCALE_LINE_WIDTH)
 
         # Text
+        text_pos = (right_pos[0] + s.SCALE_LABEL_OFFSET[0], right_pos[1] + s.SCALE_LABEL_OFFSET[1])
         if close_digit >= 1000:
-            TextView(str(int(close_digit / 1000)) + " km", (0, 0, 0), 20) \
-                .print(screen, (right_pos[0] + 30, right_pos[1]), True)
+            TextView(str(int(close_digit / 1000)) + " km", color, s.HUD_FONT_SIZE).print(screen, text_pos, True)
         else:
-            TextView(str(int(close_digit)) + " m", (0, 0, 0), 20) \
-                .print(screen, (right_pos[0] + 30, right_pos[1]), True)
+            TextView(str(int(close_digit)) + " m", color, s.HUD_FONT_SIZE).print(screen, text_pos, True)
