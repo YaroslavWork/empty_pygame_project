@@ -2,8 +2,9 @@ import pygame
 
 import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
-from scripts.field import FieldModel, FieldView
+from scripts.field import FieldView
 from scripts.UI.text import TextView
+from scripts.world import WorldModel
 
 
 class App:
@@ -28,10 +29,12 @@ class App:
         self.dt = 0
         self.mouse_pos = (0, 0)
         self.keys = []
+        self.intents = set()
 
         # Set model variables
-        self.camera_model = CameraModel(x=0, y=0, distance=10, resolution=self.size)
-        self.field_model = FieldModel()
+        self.world = WorldModel(camera_model=CameraModel(x=0, y=0, distance=10, resolution=self.size))
+        self.camera_model = self.world.camera_model
+        self.field_model = self.world.field_model
 
         # Set view variables
         self.camera_view = CameraView(self.camera_model)
@@ -70,24 +73,36 @@ class App:
                     pass
 
         self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
+        self.intents = self.collect_intents()  # Collect intents from keys
+
+    def collect_intents(self) -> set:
+        """
+        Input block.
+        Converts the pressed keys into a set of input intents.
+        """
+        intents = set()
+
+        if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
+            intents.add("left")
+        if self.keys[pygame.K_RIGHT] or self.keys[pygame.K_d]:
+            intents.add("right")
+        if self.keys[pygame.K_UP] or self.keys[pygame.K_w]:
+            intents.add("up")
+        if self.keys[pygame.K_DOWN] or self.keys[pygame.K_s]:
+            intents.add("down")
+        if self.keys[pygame.K_e]:
+            intents.add("zoom_in")
+        if self.keys[pygame.K_q]:
+            intents.add("zoom_out")
+
+        return intents
 
     def update_physics(self) -> None:
         """
         Physics block.
-        Calculate model from *Model classes.
+        Applies the input intents to the world model.
         """
-        if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
-            self.camera_model.move_left(1, self.dt)
-        if self.keys[pygame.K_RIGHT] or self.keys[pygame.K_d]:
-            self.camera_model.move_right(1, self.dt)
-        if self.keys[pygame.K_UP] or self.keys[pygame.K_w]:
-            self.camera_model.move_up(1, self.dt)
-        if self.keys[pygame.K_DOWN] or self.keys[pygame.K_s]:
-            self.camera_model.move_down(1, self.dt)
-        if self.keys[pygame.K_e]:
-            self.camera_model.scale_in(1, self.dt)
-        if self.keys[pygame.K_q]:
-            self.camera_model.scale_out(1, self.dt)
+        self.world.step(self.dt, self.intents)
 
     def render(self) -> None:
         """
