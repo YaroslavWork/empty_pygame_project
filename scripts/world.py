@@ -86,6 +86,16 @@ class WorldModel:
         if "down" in intents:
             player.move_down(s.PLAYER_MOVE_SPEED, dt)
 
+    def interpolate_players(self, dt) -> None:
+        """
+        This function smooth the drawn position of every player toward its
+        authoritative position. Called every frame for continuous movement.
+        :param dt: Delta time
+        :return: None
+        """
+        for player in self.players.values():
+            player.interpolate(dt)
+
     def snapshot(self) -> dict:
         """
         This function convert the whole world state to a plain dict.

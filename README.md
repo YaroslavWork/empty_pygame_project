@@ -58,6 +58,22 @@ broadcasts all of them in the snapshot, so both windows see each other's
 rectangles move independently. The camera stays shared and `Q` / `E` zoom it.
 Players are removed from the world when a client disconnects.
 
+### Motion smoothing (interpolation)
+
+The server only steps the world at its own tick rate, so snapshots arrive in
+coarse jumps. To keep motion smooth, each `PlayerModel` tracks two positions:
+
+- `x` / `y` — the **authoritative** position from the snapshot (the source of truth).
+- `render_x` / `render_y` — the **drawn** position, smoothed toward `x` / `y` every frame.
+
+`PlayerModel.interpolate` closes the gap by a frame-rate-safe fraction
+(`s.PLAYER_INTERPOLATION_SPEED`, `blend = min(1, speed * dt / 1000)`), and
+`PlayerView` draws `render_x` / `render_y`. `App.update_physics` calls
+`world.interpolate_players(dt)` after applying the snapshot, so at a high frame
+rate the rectangle glides between the lower-rate server updates instead of
+snapping. A faster `PLAYER_INTERPOLATION_SPEED` reacts quicker (snappier/more
+jitter); a slower one glides more (smoother/laggier).
+
 ### Two windows on one machine
 
 Run the server and two clients in three terminals:
@@ -89,7 +105,8 @@ There are no magic numbers in feature code — change behavior through settings.
 ## Controls
 
 `WASD` moves **your player** (a random-coloured rectangle); `Q` / `E` zoom the
-camera. Your player is the same entity solo and online.
+camera. Your player is the same entity solo and online. Move speed is
+`PLAYER_MOVE_SPEED` (meters per second) in `scripts/settings.py`.
 
 | Key | Action |
 |-----|--------|
@@ -118,7 +135,7 @@ scripts/
     model.py             FieldModel   — game world state (no pygame)
     view.py              FieldView    — draws the world
   player/
-    model.py             PlayerModel  — position, random color, movement (no pygame)
+    model.py             PlayerModel  — position, random color, movement + interpolation (no pygame)
     view.py              PlayerView   — draws a player rectangle
   net/
     protocol.py          length-prefixed JSON framing
@@ -163,7 +180,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-120 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+131 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

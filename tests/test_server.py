@@ -2,6 +2,7 @@ import asyncio
 
 import pytest
 
+from scripts import settings as s
 from scripts.camera import CameraModel
 from scripts.net import protocol
 from scripts.net.client import NetClient
@@ -38,7 +39,7 @@ def test_tick_applies_per_player_intents_and_resets_them():
 
     asyncio.run(server.tick())
 
-    assert server.world.players["0"].x == pytest.approx(1 * TICK_DT / 1000)
+    assert server.world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED * TICK_DT / 1000)
     assert server.intents == {"0": set()}
 
 

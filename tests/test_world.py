@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from scripts import settings as s
 from scripts.camera import CameraModel
 from scripts.field import FieldModel
 from scripts.world import WorldModel
@@ -60,7 +61,7 @@ def test_step_left_moves_player_left():
 
     world.step(1000, ["left"])
 
-    assert world.players["0"].x == pytest.approx(-1)
+    assert world.players["0"].x == pytest.approx(-s.PLAYER_MOVE_SPEED)
     assert world.camera_model.x == 0
 
 
@@ -69,7 +70,7 @@ def test_step_right_moves_player_right():
 
     world.step(1000, ["right"])
 
-    assert world.players["0"].x == pytest.approx(1)
+    assert world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
     assert world.camera_model.x == 0
 
 
@@ -78,7 +79,7 @@ def test_step_up_moves_player_up():
 
     world.step(1000, ["up"])
 
-    assert world.players["0"].y == pytest.approx(-1)
+    assert world.players["0"].y == pytest.approx(-s.PLAYER_MOVE_SPEED)
     assert world.camera_model.y == 0
 
 
@@ -87,7 +88,7 @@ def test_step_down_moves_player_down():
 
     world.step(1000, ["down"])
 
-    assert world.players["0"].y == pytest.approx(1)
+    assert world.players["0"].y == pytest.approx(s.PLAYER_MOVE_SPEED)
     assert world.camera_model.y == 0
 
 
@@ -112,8 +113,8 @@ def test_step_applies_multiple_intents():
 
     world.step(1000, ["right", "down"])
 
-    assert world.players["0"].x == pytest.approx(1)
-    assert world.players["0"].y == pytest.approx(1)
+    assert world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
+    assert world.players["0"].y == pytest.approx(s.PLAYER_MOVE_SPEED)
 
 
 def test_step_without_intents_does_not_move():
@@ -130,7 +131,7 @@ def test_step_ignores_unknown_intents():
 
     world.step(1000, ["fly", "left"])
 
-    assert world.players["0"].x == pytest.approx(-1)
+    assert world.players["0"].x == pytest.approx(-s.PLAYER_MOVE_SPEED)
 
 
 def test_step_accepts_any_iterable():
@@ -138,7 +139,7 @@ def test_step_accepts_any_iterable():
 
     world.step(1000, {"right"})
 
-    assert world.players["0"].x == pytest.approx(1)
+    assert world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
 
 
 def test_step_is_frame_rate_independent():
@@ -158,8 +159,8 @@ def test_step_players_uses_per_player_intents():
 
     world.step_players(1000, {"0": {"right"}, "1": {"left"}})
 
-    assert world.players["0"].x == pytest.approx(1)
-    assert world.players["1"].x == pytest.approx(-1)
+    assert world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
+    assert world.players["1"].x == pytest.approx(-s.PLAYER_MOVE_SPEED)
 
 
 def test_step_players_ignores_unknown_players():
@@ -238,3 +239,36 @@ def test_snapshot_is_json_serializable():
     world = make_world(x=1, y=2, distance=3, resolution=(800, 600))
 
     assert json.loads(json.dumps(world.snapshot())) == world.snapshot()
+
+
+def test_interpolate_players_moves_render_toward_state():
+    world = make_world()
+    world.players["0"].x = 10
+    world.players["0"].y = 20
+
+    world.interpolate_players(1000)
+
+    assert world.players["0"].render_x == pytest.approx(10)
+    assert world.players["0"].render_y == pytest.approx(20)
+
+
+def test_interpolate_players_updates_every_player():
+    world = make_world()
+    world.add_player(1)
+    world.players["0"].x = 10
+    world.players["1"].x = -10
+
+    world.interpolate_players(1000)
+
+    assert world.players["0"].render_x == pytest.approx(10)
+    assert world.players["1"].render_x == pytest.approx(-10)
+
+
+def test_interpolate_players_does_not_change_authoritative_state():
+    world = make_world()
+    world.players["0"].x = 10
+
+    world.interpolate_players(1000)
+
+    assert world.players["0"].x == 10
+    assert world.players["0"].y == 0

@@ -1,5 +1,6 @@
 import pytest
 
+from scripts import settings as s
 from scripts.camera import CameraModel
 from scripts.net.client import Client, LocalClient, NetClient
 from scripts.world import WorldModel
@@ -22,7 +23,7 @@ def test_local_client_update_steps_world():
 
     client.update(1000, ["right"])
 
-    assert world.players["0"].x == pytest.approx(1)
+    assert world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
 
 
 def test_local_client_update_returns_world_snapshot():

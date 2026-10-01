@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from scripts import settings as s
 from scripts.player import PlayerModel, PlayerView
 from scripts.player.model import get_random_color
 
@@ -14,6 +15,13 @@ def test_default_state_is_created():
     assert len(player.color) == 3
     assert all(0 <= channel <= 255 for channel in player.color)
     assert player.size == 2
+
+
+def test_default_render_position_matches_state():
+    player = PlayerModel()
+
+    assert player.render_x == player.x
+    assert player.render_y == player.y
 
 
 def test_injected_state_is_used():
@@ -67,7 +75,57 @@ def test_movement_is_frame_rate_independent():
     assert fast.x == pytest.approx(slow.x)
 
 
-def test_to_dict_is_json_serializable():
+def test_interpolate_moves_render_toward_state():
+    player = PlayerModel(x=0, y=0)
+    player.x = 10
+    player.y = 20
+
+    player.interpolate(1000, speed=1)  # blend = 1.0 -> fully catch up
+
+    assert player.render_x == pytest.approx(10)
+    assert player.render_y == pytest.approx(20)
+
+
+def test_interpolate_is_partial_with_small_dt():
+    player = PlayerModel(x=0, y=0)
+    player.x = 10
+
+    player.interpolate(100, speed=1)  # blend = 0.1 -> 10% of the way
+
+    assert player.render_x == pytest.approx(1)
+    assert 0 < player.render_x < 10
+
+
+def test_interpolate_never_overshoots():
+    player = PlayerModel(x=0, y=0)
+    player.x = 10
+
+    for _ in range(100):
+        player.interpolate(1000, speed=5)
+
+    assert player.render_x == pytest.approx(10)
+
+
+def test_interpolate_uses_settings_speed_by_default():
+    player = PlayerModel(x=0, y=0)
+    player.x = s.PLAYER_INTERPOLATION_SPEED  # value chosen so blend * dt == 1.0 at dt=1000
+
+    player.interpolate(1000)
+
+    assert player.render_x == pytest.approx(s.PLAYER_INTERPOLATION_SPEED)
+
+
+def test_interpolate_does_not_change_authoritative_state():
+    player = PlayerModel(x=0, y=0)
+    player.x = 5
+
+    player.interpolate(1000, speed=1)
+
+    assert player.x == 5
+    assert player.y == 0
+
+
+
     player = PlayerModel(x=1, y=2, color=(10, 20, 30), size=5)
 
     assert json.loads(json.dumps(player.to_dict())) == {
@@ -113,8 +171,22 @@ def test_view_draws_player_rect(screen):
 
     view.draw(screen, camera)
 
-    center = camera.get_local_point(player.x, player.y)
+    center = camera.get_local_point(player.render_x, player.render_y)
     assert screen.get_at(tuple(map(int, center)))[:3] == (255, 0, 0)
+
+
+def test_view_draws_at_render_position_not_authoritative(screen):
+    from scripts.camera import CameraModel
+
+    camera = CameraModel(x=0, y=0, distance=10, resolution=(320, 240))
+    player = PlayerModel(x=0, y=0, color=(0, 0, 255), size=2)
+    player.x = 10  # authoritative moved, but render position stayed at the origin
+    view = PlayerView(player)
+
+    view.draw(screen, camera)
+
+    origin = camera.get_local_point(0, 0)
+    assert screen.get_at(tuple(map(int, origin)))[:3] == (0, 0, 255)
 
 
 def test_view_uses_camera_offset(screen):

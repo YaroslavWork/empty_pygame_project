@@ -113,12 +113,15 @@ class App:
         """
         Physics block.
         Sends the input intents to the client and applies the received snapshot.
+        Then smooths the drawn player positions toward the snapshot values.
         """
         snapshot = self.client.update(self.dt, self.intents)
 
         if snapshot is not None:
             self.world.apply_snapshot(snapshot)
             self.camera_model.resolution = tuple(self.size)  # Keep the local window resolution
+
+        self.world.interpolate_players(self.dt)
 
     def render(self) -> None:
         """

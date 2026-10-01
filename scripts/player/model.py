@@ -28,6 +28,10 @@ class PlayerModel:
         self.color = color or get_random_color()
         self.size = s.PLAYER_SIZE if size is None else size
 
+        # Drawn position (smoothed toward the authoritative x, y between snapshots)
+        self.render_x = self.x
+        self.render_y = self.y
+
     def move_left(self, speed, dt) -> None:
         """
         This function move the player to the left side.
@@ -63,6 +67,21 @@ class PlayerModel:
         :return: None
         """
         self.y += speed * dt / 1000
+
+    def interpolate(self, dt, speed=None) -> None:
+        """
+        This function smooth the drawn position (render_x, render_y) toward the
+        authoritative position (x, y). Called every frame so movement looks
+        continuous between the lower-rate network snapshots.
+        :param dt: Delta time
+        :param speed: How fast the drawn position catches up (default from settings)
+        :return: None
+        """
+        speed = s.PLAYER_INTERPOLATION_SPEED if speed is None else speed
+        blend = min(1, speed * dt / 1000)  # Fraction to close this frame (frame-rate safe)
+
+        self.render_x += (self.x - self.render_x) * blend
+        self.render_y += (self.y - self.render_y) * blend
 
     def to_dict(self) -> dict:
         """

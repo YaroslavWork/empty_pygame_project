@@ -20,7 +20,7 @@ class PlayerView:
         :param camera_model: The camera model used to convert global coordinates to local
         :return: None
         """
-        center_x, center_y = camera_model.get_local_point(self.model.x, self.model.y)
+        center_x, center_y = camera_model.get_local_point(self.model.render_x, self.model.render_y)
         half_size = camera_model.get_local_radius(self.model.size / 2)
 
         rect = pygame.Rect(0, 0, half_size * 2, half_size * 2)

@@ -81,6 +81,11 @@ Rules I follow when editing this project. Keep them in sync with the codebase.
   the camera. Solo has one local player; online the server keeps one player per
   connection and broadcasts every player in the snapshot. Player ids are strings
   so they survive the JSON round trip.
+- Motion smoothing: `PlayerModel` keeps the authoritative `x` / `y` (from the
+  snapshot) plus a drawn `render_x` / `render_y`. `PlayerModel.interpolate`
+  smooths render toward state (`PLAYER_INTERPOLATION_SPEED`, frame-rate-safe),
+  `PlayerView` draws the render position, and `App.update_physics` calls
+  `world.interpolate_players(dt)`. Move speed is `PLAYER_MOVE_SPEED` (m/s).
 
 ## Workflow
 

@@ -17,8 +17,9 @@ CAMERA_ZOOM_SPEED = 1
 # Player
 PLAYER_START_X = 0
 PLAYER_START_Y = 0
-PLAYER_MOVE_SPEED = 1
+PLAYER_MOVE_SPEED = 4  # Meters per second
 PLAYER_SIZE = 2  # Width and height (in meters)
+PLAYER_INTERPOLATION_SPEED = 15  # How fast the drawn position catches up to the server position
 
 # Map scale (UI)
 SCALE_MIN_PIXELS = 50

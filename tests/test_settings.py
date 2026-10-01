@@ -59,3 +59,4 @@ def test_player_settings_exist():
     assert isinstance(s.PLAYER_START_Y, (int, float))
     assert s.PLAYER_MOVE_SPEED > 0
     assert s.PLAYER_SIZE > 0
+    assert s.PLAYER_INTERPOLATION_SPEED > 0

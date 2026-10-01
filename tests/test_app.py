@@ -1,6 +1,7 @@
 import pygame
 import pytest
 
+from scripts import settings as s
 from scripts.app import App
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldModel, FieldView
@@ -101,7 +102,18 @@ def test_physics_moves_player_right(app):
 
     app.update_physics()
 
-    assert app.world.players["0"].x == pytest.approx(1)
+    assert app.world.players["0"].x == pytest.approx(s.PLAYER_MOVE_SPEED)
+
+
+def test_physics_interpolates_player_render_position(app):
+    app.dt = 1000
+    app.keys = FakeKeys([pygame.K_d])
+    app.intents = app.collect_intents()
+
+    app.update_physics()
+
+    # With a full second of dt the render position catches up to the state
+    assert app.world.players["0"].render_x == pytest.approx(app.world.players["0"].x)
 
 
 def test_physics_does_not_move_camera_with_wasd(app):
