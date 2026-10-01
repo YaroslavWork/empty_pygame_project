@@ -33,11 +33,29 @@ Rules I follow when editing this project. Keep them in sync with the codebase.
 - New features live in their own package folder (`scripts/<feature>/model.py`,
   `view.py`, `__init__.py`).
 
+## Tests
+
+- Framework: `pytest`. Tests live in `tests/` and mirror the package layout
+  (`test_camera_model.py`, `test_app.py`, ...).
+- Run: `.venv/bin/pytest` (or `.venv/bin/python -m pytest`). Config in `pytest.ini`.
+- Tests run headless: `conftest.py` sets `SDL_VIDEODRIVER=dummy` /
+  `SDL_AUDIODRIVER=dummy` and adds the project root to `sys.path`. Do not require
+  a real display.
+- Test behavior, not implementation details. Prefer clear function names
+  (`test_move_right_increases_x`) over docstrings/comments.
+- Use `pytest.approx` for float comparisons, never exact `==` on floats.
+- Keep model tests free of pygame; only view/render tests touch a screen fixture.
+- When a test reveals wrong behavior, do not silently fix the code — flag it and
+  ask before changing behavior (see Code style).
+- When fixing a flagged bug, update the test that documented it to assert the
+  corrected behavior.
+- Every new feature/class should get tests. Verify the suite still passes before
+  finishing.
+
 ## Project facts
 
-- Python 3.11 inside `.venv` (created with `uv`). System Python is 3.14 and
-  lacks pygame — always use `.venv`.
-- Dependency: `pygame==2.6.1` (see `requirements.txt`).
+- Python 3.11 inside `.venv`.
+- Dependency: see `requirements.txt` and `requirements-dev.txt`.
 - Entry point: `main.py` -> `scripts.app.App.update()` loop.
 - Run: `.venv/bin/python main.py` (or press F5, which uses `.vscode/launch.json`).
 
