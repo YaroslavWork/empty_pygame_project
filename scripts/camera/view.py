@@ -1,7 +1,7 @@
 import pygame
 
 from scripts.camera.model import CameraModel
-from scripts.UI.text import Text
+from scripts.UI.text import TextView
 
 
 class CameraView:
@@ -81,8 +81,8 @@ class CameraView:
 
         # Text
         if close_digit >= 1000:
-            Text(str(int(close_digit / 1000)) + " km", (0, 0, 0), 20) \
+            TextView(str(int(close_digit / 1000)) + " km", (0, 0, 0), 20) \
                 .print(screen, (right_pos[0] + 30, right_pos[1]), True)
         else:
-            Text(str(int(close_digit)) + " m", (0, 0, 0), 20) \
+            TextView(str(int(close_digit)) + " m", (0, 0, 0), 20) \
                 .print(screen, (right_pos[0] + 30, right_pos[1]), True)

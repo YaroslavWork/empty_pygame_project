@@ -3,7 +3,7 @@ import pygame
 import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldModel, FieldView
-from scripts.UI.text import Text
+from scripts.UI.text import TextView
 
 
 class App:
@@ -56,7 +56,7 @@ class App:
 
         for event in pygame.event.get():  # Get all events
             if event.type == pygame.QUIT:  # If you want to close the program...
-                Text.fonts = {}  # Clear fonts
+                TextView.fonts = {}  # Clear fonts
                 close()
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
@@ -99,7 +99,7 @@ class App:
         self.field_view.draw(self.screen, self.camera_model)
 
         self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
-        Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
+        TextView("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
                                                                             (self.width - 70, self.height - 21),
                                                                             False)  # FPS counter
 
