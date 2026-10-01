@@ -49,7 +49,7 @@ class CameraModel:
         :param r: Radius in local coordinates
         :return: Radius in global coordinates
         """
-        return r / self.distance / self.resolution[0]
+        return r * self.distance / self.resolution[0]
 
     def move_left(self, speed, dt) -> None:
         """
