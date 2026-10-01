@@ -104,3 +104,26 @@ class CameraModel:
         :return: None
         """
         self.distance -= self.distance * speed_scale * dt / 1000
+
+    def to_dict(self) -> dict:
+        """
+        This function convert camera state to a plain dict (for network/save).
+        :return: Camera state as a dict
+        """
+        return {
+            "x": self.x,
+            "y": self.y,
+            "distance": self.distance,
+            "resolution": list(self.resolution),
+        }
+
+    def from_dict(self, data) -> None:
+        """
+        This function restore camera state from a plain dict.
+        :param data: Camera state as a dict
+        :return: None
+        """
+        self.x = data["x"]
+        self.y = data["y"]
+        self.distance = data["distance"]
+        self.resolution = tuple(data["resolution"])

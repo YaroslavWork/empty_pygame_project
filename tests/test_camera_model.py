@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from scripts.camera import CameraModel
@@ -124,3 +126,43 @@ def test_scale_is_proportional_to_current_distance():
     camera.scale_in(1, 500)
 
     assert camera.distance == pytest.approx(100 * 1.5)
+
+
+def test_to_dict_returns_state():
+    camera = make_camera(x=3, y=4, distance=8, resolution=(800, 600))
+
+    assert camera.to_dict() == {
+        "x": 3,
+        "y": 4,
+        "distance": 8,
+        "resolution": [800, 600],
+    }
+
+
+def test_from_dict_restores_state():
+    camera = make_camera(x=0, y=0, distance=1, resolution=(640, 480))
+
+    camera.from_dict({"x": 7, "y": 9, "distance": 12, "resolution": [800, 600]})
+
+    assert camera.x == 7
+    assert camera.y == 9
+    assert camera.distance == 12
+    assert camera.resolution == (800, 600)
+
+
+def test_snapshot_roundtrip():
+    original = make_camera(x=3, y=4, distance=8, resolution=(800, 600))
+    restored = make_camera(x=0, y=0, distance=1, resolution=(640, 480))
+
+    restored.from_dict(original.to_dict())
+
+    assert restored.x == original.x
+    assert restored.y == original.y
+    assert restored.distance == original.distance
+    assert restored.resolution == original.resolution
+
+
+def test_dict_is_json_serializable():
+    camera = make_camera(x=3, y=4, distance=8, resolution=(800, 600))
+
+    assert json.loads(json.dumps(camera.to_dict())) == camera.to_dict()
