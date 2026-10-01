@@ -1,9 +1,9 @@
-import pygame
-
-from scripts.UI.text import Text
-
-
-class Camera:
+class CameraModel:
+    """
+    Data model of the camera.
+    This class holds only the state and the math (no pygame, no drawing).
+    It represents where the camera looks and how the world is scaled.
+    """
 
     def __init__(self, x, y, distance, resolution=(640, 480)) -> None:
         self.x = x
@@ -104,54 +104,3 @@ class Camera:
         :return: None
         """
         self.distance -= self.distance * speed_scale * dt / 1000
-
-    # This function draw map scale on the screen (the part of UI)
-    def draw_map_scale(self, screen, min_pixels_scale=50, max_pixels_scale=200,
-                       first_digital=(1, 2, 5), offset=(60, 10), stick_width=5) -> None:
-        """
-        This function draw map scale on the screen (the part of UI)
-        :param screen: Screen for drawing
-        :param min_pixels_scale: The value of min pixels scale
-        :param max_pixels_scale: The value of max pixels scale
-        :param first_digital: The first digital for scale (ex. (1, 2, 5))
-        :param offset: Offset for scale (for UI)
-        :param stick_width: Width of the stick
-        :return: None
-        """
-        min_distance = min_pixels_scale / self.resolution[0] * self.distance  # Calculate distance for min pixels scale
-        max_distance = max_pixels_scale / self.resolution[0] * self.distance  # Calculate distance for max pixels scale
-        mean_distance = (min_distance + max_distance) / 2  # Mean distance
-
-        # Find the closest digit to the mean distance (ex. if mean distance is 120, then the closest digit is 100)
-        digit_amount = len(str(int(mean_distance)))  # Calculate amount of digits
-        multiply = 10 ** (digit_amount - 1)  # Calculate multiply for the closest digit
-        close_digit = mean_distance / multiply  # Calculate closest digit
-        close_digit = min(first_digital, key=lambda x: abs(x - close_digit))  # Find the closest digit
-        close_digit = close_digit * multiply  # Add multiplying to the closest digit
-
-        # Calculate line length for the closest digit
-        line_length = close_digit / self.distance * self.resolution[0]
-
-        # Calculate line length (left and right points)
-        left_pos = (self.resolution[0] - offset[0] - line_length, self.resolution[1] - offset[1])
-        right_pos = (self.resolution[0] - offset[0], self.resolution[1] - offset[1])
-
-        # Draw lines
-        pygame.draw.line(screen, (0, 0, 0), left_pos, right_pos, 2)
-        pygame.draw.line(screen,
-                         (0, 0, 0),
-                         (left_pos[0], left_pos[1] - stick_width),
-                         (left_pos[0], left_pos[1] + stick_width),
-                         2)
-        pygame.draw.line(screen, (0, 0, 0),
-                         (right_pos[0], right_pos[1] + stick_width),
-                         (right_pos[0], right_pos[1] - stick_width),
-                         2)
-
-        # Text
-        if close_digit >= 1000:
-            Text(str(int(close_digit / 1000)) + " km", (0, 0, 0), 20) \
-                .print(screen, (right_pos[0] + 30, right_pos[1]), True)
-        else:
-            Text(str(int(close_digit)) + " m", (0, 0, 0), 20) \
-                .print(screen, (right_pos[0] + 30, right_pos[1]), True)
