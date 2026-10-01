@@ -2,7 +2,7 @@ import pygame
 
 import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
-from scripts.field import Field
+from scripts.field import FieldModel, FieldView
 from scripts.UI.text import Text
 
 
@@ -31,12 +31,12 @@ class App:
 
         # Set model variables
         self.camera_model = CameraModel(x=0, y=0, distance=10, resolution=self.size)
+        # This line takes data from save file
+        self.field_model = FieldModel()
 
         # Set view variables
         self.camera_view = CameraView(self.camera_model)
-        
-        # This line takes data from save file
-        self.field = Field()
+        self.field_view = FieldView(self.field_model)
 
     def update(self) -> None:
         """
@@ -96,6 +96,8 @@ class App:
         Draws the current model state with help of *View classes.
         """
         self.screen.fill(self.colors['background'])  # Fill background
+
+        self.field_view.draw(self.screen, self.camera_model)  # Draw the field
 
         self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
