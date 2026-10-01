@@ -31,7 +31,6 @@ class App:
 
         # Set model variables
         self.camera_model = CameraModel(x=0, y=0, distance=10, resolution=self.size)
-        # This line takes data from save file
         self.field_model = FieldModel()
 
         # Set view variables
@@ -57,8 +56,8 @@ class App:
 
         for event in pygame.event.get():  # Get all events
             if event.type == pygame.QUIT:  # If you want to close the program...
-                close()
                 Text.fonts = {}  # Clear fonts
+                close()
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:
@@ -97,7 +96,7 @@ class App:
         """
         self.screen.fill(self.colors['background'])  # Fill background
 
-        self.field_view.draw(self.screen, self.camera_model)  # Draw the field
+        self.field_view.draw(self.screen, self.camera_model)
 
         self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
         Text("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
