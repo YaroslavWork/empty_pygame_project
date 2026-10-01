@@ -14,29 +14,29 @@ def test_local_client_is_a_client():
     assert isinstance(LocalClient(make_world()), Client)
 
 
-def test_local_client_step_moves_world():
+def test_local_client_update_steps_world():
     client = LocalClient(make_world(x=5, distance=10))
 
-    client.step(1000, ["right"])
+    client.update(1000, ["right"])
 
     assert client.world.camera_model.x == pytest.approx(15)
 
 
-def test_local_client_returns_world_snapshot():
+def test_local_client_update_returns_world_snapshot():
     client = LocalClient(make_world(x=1, y=2, distance=3, resolution=(800, 600)))
 
-    assert client.receive_snapshot() == {
+    snapshot = client.update(0, [])
+
+    assert snapshot == {
         "camera": {"x": 1, "y": 2, "distance": 3, "resolution": [800, 600]},
         "field": {},
     }
 
 
-def test_local_client_send_intents_is_a_noop():
-    client = LocalClient(make_world(x=5, distance=10))
+def test_local_client_close_is_a_noop():
+    client = LocalClient(make_world())
 
-    client.send_intents(["right"])
-
-    assert client.world.camera_model.x == 5
+    client.close()
 
 
 def test_net_client_is_a_client():

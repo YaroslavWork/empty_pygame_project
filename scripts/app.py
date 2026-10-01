@@ -3,13 +3,14 @@ import pygame
 import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldView
+from scripts.net.client import Client, LocalClient
 from scripts.UI.text import TextView
 from scripts.world import WorldModel
 
 
 class App:
 
-    def __init__(self) -> None:
+    def __init__(self, client: Client = None) -> None:
         # Initialize pygame and settings
         pygame.init()
 
@@ -35,6 +36,9 @@ class App:
         self.world = WorldModel(camera_model=CameraModel(x=0, y=0, distance=10, resolution=self.size))
         self.camera_model = self.world.camera_model
         self.field_model = self.world.field_model
+
+        # Set client (singleplayer uses an in-process world)
+        self.client = client or LocalClient(self.world)
 
         # Set view variables
         self.camera_view = CameraView(self.camera_model)
@@ -100,9 +104,12 @@ class App:
     def update_physics(self) -> None:
         """
         Physics block.
-        Applies the input intents to the world model.
+        Sends the input intents to the client and applies the received snapshot.
         """
-        self.world.step(self.dt, self.intents)
+        snapshot = self.client.update(self.dt, self.intents)
+
+        if snapshot is not None:
+            self.world.apply_snapshot(snapshot)
 
     def render(self) -> None:
         """

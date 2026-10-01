@@ -10,10 +10,7 @@ class Client:
     never needs to know whether the world runs locally or on a server.
     """
 
-    def send_intents(self, intents) -> None:
-        raise NotImplementedError
-
-    def receive_snapshot(self):
+    def update(self, dt, intents):
         raise NotImplementedError
 
     def close(self) -> None:
@@ -29,13 +26,8 @@ class LocalClient(Client):
     def __init__(self, world) -> None:
         self.world = world
 
-    def send_intents(self, intents) -> None:
-        pass
-
-    def step(self, dt, intents) -> None:
+    def update(self, dt, intents):
         self.world.step(dt, intents)
-
-    def receive_snapshot(self):
         return self.world.snapshot()
 
     def close(self) -> None:
@@ -54,8 +46,9 @@ class NetClient(Client):
         self.buffer = b""
         self.latest_snapshot = None
 
-    def send_intents(self, intents) -> None:
+    def update(self, dt, intents):
         self.socket.sendall(protocol.encode(protocol.make_intent(intents)))
+        return self.receive_snapshot()
 
     def receive_snapshot(self):
         try:

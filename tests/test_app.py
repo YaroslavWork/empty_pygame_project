@@ -4,6 +4,7 @@ import pytest
 from scripts.app import App
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldModel, FieldView
+from scripts.net.client import Client, LocalClient
 from scripts.world import WorldModel
 
 
@@ -26,6 +27,21 @@ def test_app_wires_models_and_views(app):
     assert isinstance(app.camera_view, CameraView)
     assert isinstance(app.field_model, FieldModel)
     assert isinstance(app.field_view, FieldView)
+
+
+def test_app_uses_a_local_client_by_default(app):
+    assert isinstance(app.client, Client)
+    assert isinstance(app.client, LocalClient)
+    assert app.client.world is app.world
+
+
+def test_app_uses_injected_client():
+    world = WorldModel()
+    client = LocalClient(world)
+
+    app = App(client=client)
+
+    assert app.client is client
 
 
 def test_view_shares_the_same_model(app):
@@ -98,6 +114,43 @@ def test_physics_scales_in_and_out(app):
     app.intents = app.collect_intents()
     app.update_physics()
     assert app.camera_model.distance < 10
+
+
+def test_physics_applies_snapshot_from_client():
+    class NullClient(Client):
+        def update(self, dt, intents):
+            return {"camera": {"x": 42, "y": 0, "distance": 5, "resolution": [1080, 720]},
+                    "field": {}}
+
+        def close(self):
+            pass
+
+    app = App(client=NullClient())
+    app.dt = 1000
+    app.intents = set()
+
+    app.update_physics()
+
+    assert app.camera_model.x == 42
+    assert app.camera_model.distance == 5
+
+
+def test_physics_ignores_none_snapshot():
+    class IdleClient(Client):
+        def update(self, dt, intents):
+            return None
+
+        def close(self):
+            pass
+
+    app = App(client=IdleClient())
+    app.dt = 1000
+    app.camera_model.x = 7
+    app.intents = set()
+
+    app.update_physics()
+
+    assert app.camera_model.x == 7
 
 
 def test_update_runs_all_blocks(app):

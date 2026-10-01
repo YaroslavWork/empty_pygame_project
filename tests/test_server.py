@@ -39,7 +39,7 @@ def test_intent_roundtrip_over_socket():
         await asyncio.sleep(0.05)
 
         client = NetClient("127.0.0.1", server.port)
-        client.send_intents(["right"])
+        client.update(0, ["right"])
         await asyncio.sleep(0.1)
 
         snapshot = None

@@ -58,6 +58,11 @@ Rules I follow when editing this project. Keep them in sync with the codebase.
 - Dependency: see `requirements.txt` and `requirements-dev.txt`.
 - Entry point: `main.py` -> `scripts.app.App.update()` loop.
 - Run: `.venv/bin/python main.py` (or press F5, which uses `.vscode/launch.json`).
+- Run a server: `.venv/bin/python main.py --server`.
+- Join a server: `.venv/bin/python main.py --connect HOST:PORT`.
+- Networking: `App` talks to a `scripts.net.client.Client` (`LocalClient` for
+  singleplayer, `NetClient` over TCP). The server owns the authoritative
+  `WorldModel`; clients send intents and apply snapshots.
 
 ## Workflow
 
