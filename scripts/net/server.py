@@ -1,0 +1,89 @@
+import asyncio
+
+from scripts.net import protocol
+from scripts.world import WorldModel
+
+TICK_RATE = 20
+TICK_DT = 1000 / TICK_RATE
+
+
+class Server:
+    """
+    Authoritative game server.
+    Owns the world model, applies client intents and broadcasts snapshots.
+    """
+
+    def __init__(self, world=None) -> None:
+        self.world = world or WorldModel()
+        self.clients = set()
+        self.intents = set()
+
+    async def handle_client(self, reader, writer) -> None:
+        self.clients.add(writer)
+
+        try:
+            await self.send(writer, protocol.make_snapshot(self.world.snapshot()))
+
+            while True:
+                data = await reader.read(4096)
+
+                if not data:
+                    break
+
+                messages, _ = protocol.decode(data)
+
+                for message in messages:
+                    if message["type"] == protocol.MSG_INTENT:
+                        self.intents.update(message["intents"])
+        except (ConnectionResetError, asyncio.IncompleteReadError):
+            pass
+        finally:
+            self.clients.discard(writer)
+            writer.close()
+
+    async def send(self, writer, message) -> None:
+        writer.write(protocol.encode(message))
+        await writer.drain()
+
+    async def broadcast(self, message) -> None:
+        frame = protocol.encode(message)
+
+        for writer in list(self.clients):
+            try:
+                writer.write(frame)
+                await writer.drain()
+            except (ConnectionResetError, BrokenPipeError):
+                self.clients.discard(writer)
+
+    async def tick(self) -> None:
+        self.world.step(TICK_DT, self.intents)
+        self.intents = set()
+        await self.broadcast(protocol.make_snapshot(self.world.snapshot()))
+
+    async def run(self, host="127.0.0.1", port=5000) -> None:
+        self._server = await asyncio.start_server(self.handle_client, host, port)
+
+        async with self._server:
+            await self._server.start_serving()
+
+            while True:
+                await asyncio.sleep(TICK_DT / 1000)
+                await self.tick()
+
+    @property
+    def port(self) -> int:
+        """
+        This function return the bound port (useful when binding port 0).
+        :return: Bound port
+        """
+        return self._server.sockets[0].getsockname()[1]
+
+
+def run(host="127.0.0.1", port=5000) -> None:
+    """
+    This function run the server until interrupted (blocking).
+    :param host: Host to bind
+    :param port: Port to bind
+    :return: None
+    """
+    asyncio.run(Server().run(host, port))
