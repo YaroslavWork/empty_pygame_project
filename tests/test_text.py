@@ -84,3 +84,57 @@ def test_draw_blits_at_stored_position(screen):
         for y in range(label.text_surface.get_height())
     )
     assert changed
+
+
+def test_text_view_is_visible_by_default():
+    assert TextView("hello", (0, 0, 0), 20).visible
+
+
+def test_hide_makes_text_view_invisible():
+    label = TextView("hello", (0, 0, 0), 20)
+
+    label.hide()
+
+    assert not label.visible
+
+
+def test_show_makes_text_view_visible_again():
+    label = TextView("hello", (0, 0, 0), 20)
+    label.hide()
+
+    label.show()
+
+    assert label.visible
+
+
+def test_hidden_text_view_draws_nothing(screen):
+    TextView.fonts = {}
+    label = TextView("x", (0, 0, 0), 20, pos=(0, 0), center=False)
+    label.hide()
+    screen.fill((255, 255, 255))
+
+    label.draw(screen)
+
+    unchanged = all(
+        screen.get_at((x, y)) == pygame.Color(255, 255, 255)
+        for x in range(label.text_surface.get_width())
+        for y in range(label.text_surface.get_height())
+    )
+    assert unchanged
+
+
+def test_shown_text_view_draws_again(screen):
+    TextView.fonts = {}
+    label = TextView("x", (0, 0, 0), 20, pos=(0, 0), center=False)
+    label.hide()
+    label.show()
+    screen.fill((255, 255, 255))
+
+    label.draw(screen)
+
+    changed = any(
+        screen.get_at((x, y)) != pygame.Color(255, 255, 255)
+        for x in range(label.text_surface.get_width())
+        for y in range(label.text_surface.get_height())
+    )
+    assert changed

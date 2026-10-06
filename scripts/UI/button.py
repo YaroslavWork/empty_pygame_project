@@ -18,17 +18,33 @@ class Button(UIElement):
         self.border_color = border_color
         self.border_width = border_width
         self.border_radius = border_radius
+        self._text = text
         self.text_view = TextView(text, text_color, size_font)
 
         self.hovered = False
         self.pressed = False
         self.clicked = False
+        self.active = True
+
+    @property
+    def text(self) -> str:
+        return self._text
+
+    @text.setter
+    def text(self, value) -> None:
+        self.set_text(value)
+
+    def set_text(self, text) -> None:
+        self._text = text
+        self.text_view.set_text(text)
 
     def is_hovered(self, mouse_pos) -> bool:
         return self.rect.collidepoint(mouse_pos)
 
     def is_pressed(self, event) -> bool:
-        return (event.type == pygame.MOUSEBUTTONDOWN
+        return (self.visible
+                and self.active
+                and event.type == pygame.MOUSEBUTTONDOWN
                 and event.button == 1
                 and self.is_hovered(event.pos))
 
@@ -36,10 +52,20 @@ class Button(UIElement):
         return event.type == pygame.MOUSEBUTTONUP and event.button == 1
 
     def is_clicked(self, event) -> bool:
-        return self.is_released(event) and self.pressed and self.is_hovered(event.pos)
+        return (self.visible
+                and self.active
+                and self.is_released(event)
+                and self.pressed
+                and self.is_hovered(event.pos))
+
+    def activate(self) -> None:
+        self.active = True
+
+    def deactivate(self) -> None:
+        self.active = False
 
     def update(self, mouse_pos) -> None:
-        self.hovered = self.is_hovered(mouse_pos)
+        self.hovered = self.visible and self.active and self.is_hovered(mouse_pos)
 
     def handle_input(self, event) -> None:
         if self.is_pressed(event):
@@ -51,6 +77,8 @@ class Button(UIElement):
             self.pressed = False
 
     def draw(self, screen) -> None:
+        if not self.visible:
+            return
         color = self.color
         if self.hovered:
             color = self.hover_color

@@ -43,7 +43,7 @@ class App:
         self.ui = UI()
 
         # ALL THIS SECTION BELOW IS JUST AN EXAMPLE OF HOW TO USE THE UI SYSTEM
-        self.button = Button("Test", (20, 20), (120, 50))
+        self.button = Button("Hide FPS", (20, 20), (120, 50))
         self.fps_text = TextView("FPS: 0", (0, 0, 0), 20,
                                  pos=(self.width - 70, self.height - 21), center=False)
         self.ui.add(self.button)
@@ -111,8 +111,13 @@ class App:
 
         self.ui.update(self.mouse_pos)
 
-        if self.button.clicked:  # BUTTON EXAMPLE: Test button clicked
-            print("Test button clicked!")
+        if self.button.clicked:  # BUTTON EXAMPLE: Hide fps text button
+            if self.fps_text.visible:
+                self.fps_text.hide()
+                self.button.set_text("Show FPS")
+            else:
+                self.fps_text.show()
+                self.button.set_text("Hide FPS")
 
     def render(self) -> None:
         """

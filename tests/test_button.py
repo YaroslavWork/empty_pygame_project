@@ -209,3 +209,189 @@ def test_reset_keeps_pressed():
     button.reset()
 
     assert button.pressed
+
+
+def test_button_is_visible_and_active_by_default():
+    button = Button("Reset", (10, 10), (100, 40))
+
+    assert button.visible
+    assert button.active
+
+
+def test_hide_makes_button_invisible():
+    button = Button("Reset", (10, 10), (100, 40))
+
+    button.hide()
+
+    assert not button.visible
+
+
+def test_show_makes_button_visible_again():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.hide()
+
+    button.show()
+
+    assert button.visible
+
+
+def test_deactivate_makes_button_inactive():
+    button = Button("Reset", (10, 10), (100, 40))
+
+    button.deactivate()
+
+    assert not button.active
+
+
+def test_activate_makes_button_active_again():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.deactivate()
+
+    button.activate()
+
+    assert button.active
+
+
+def test_inactive_button_is_not_pressed():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.deactivate()
+    event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+
+    assert not button.is_pressed(event)
+
+
+def test_inactive_button_is_not_clicked():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.handle_input(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)}))
+    button.deactivate()
+    release = pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": (50, 30)})
+
+    assert not button.is_clicked(release)
+
+
+def test_inactive_button_does_not_become_pressed_on_input():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.deactivate()
+    event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+
+    button.handle_input(event)
+
+    assert not button.pressed
+    assert not button.clicked
+
+
+def test_inactive_button_is_not_hovered():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.deactivate()
+
+    button.update((50, 30))
+
+    assert not button.hovered
+
+
+def test_reactivated_button_presses_again():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.deactivate()
+    button.activate()
+    event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+
+    assert button.is_pressed(event)
+
+
+def test_hidden_button_is_not_pressed():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.hide()
+    event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+
+    assert not button.is_pressed(event)
+
+
+def test_hidden_button_is_not_clicked():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.handle_input(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)}))
+    button.hide()
+    release = pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": (50, 30)})
+
+    assert not button.is_clicked(release)
+
+
+def test_hidden_button_does_not_become_pressed_on_input():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.hide()
+    event = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+
+    button.handle_input(event)
+
+    assert not button.pressed
+    assert not button.clicked
+
+
+def test_hidden_button_is_not_hovered():
+    button = Button("Reset", (10, 10), (100, 40))
+    button.hide()
+
+    button.update((50, 30))
+
+    assert not button.hovered
+
+
+def test_hidden_button_draws_nothing(screen):
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40), color=(210, 210, 210))
+    button.hide()
+    screen.fill((255, 255, 255))
+
+    button.draw(screen)
+
+    assert screen.get_at((13, 30)) == pygame.Color(255, 255, 255)
+
+
+def test_shown_button_draws_again(screen):
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40), color=(210, 210, 210))
+    button.hide()
+    button.show()
+    screen.fill((255, 255, 255))
+
+    button.draw(screen)
+
+    assert screen.get_at((13, 30)) == pygame.Color(210, 210, 210)
+
+
+def test_set_text_updates_the_label():
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40))
+    before = button.text_view.text_surface.get_width()
+
+    button.set_text("Reset the whole world")
+
+    assert button.text_view.text_surface.get_width() > before
+
+
+def test_set_text_keeps_the_button_rect():
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40))
+    rect = button.rect.copy()
+
+    button.set_text("a much longer label")
+
+    assert button.rect == rect
+
+
+def test_setting_text_updates_the_label():
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40))
+    before = button.text_view.text_surface.get_width()
+
+    button.text = "Reset the whole world"
+
+    assert button.text_view.text_surface.get_width() > before
+
+
+def test_text_property_returns_the_current_label():
+    TextView.fonts = {}
+    button = Button("Reset", (10, 10), (100, 40))
+
+    button.text = "Play"
+
+    assert button.text == "Play"

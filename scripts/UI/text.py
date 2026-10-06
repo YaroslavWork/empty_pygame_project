@@ -26,6 +26,8 @@ class TextView(UIElement):
         self.text_surface = self.font.render(text, True, self.color)
 
     def print(self, screen, pos, center=True) -> None:
+        if not self.visible:
+            return
         if center:
             screen.blit(self.text_surface, self.text_surface.get_rect(center=pos))
         else:

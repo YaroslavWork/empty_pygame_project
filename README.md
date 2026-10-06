@@ -95,8 +95,14 @@ scripts/
   release that was not preceded by a press on the button is not a click.
 - `ui.reset()` clears each element's one-frame input state at the end of the frame, so
   `App` never clears `button.clicked` by hand.
+- Every element has a `visible` flag with `hide()` / `show()`. A hidden element draws
+  nothing and never reacts to input.
+- A `Button` also has an `active` flag (`deactivate()` / `activate()`): an inactive
+  button stays visible but is not pressable and shows no hover. Interaction needs the
+  button to be both visible and active, so a hidden button is never pressable.
 - A `TextView` is created once and its content changed with `set_text` (which re-renders
-  the surface) instead of building a new one every frame — see `App.fps_text`.
+  the surface) instead of building a new one every frame — see `App.fps_text`. A
+  `Button` exposes the same `set_text`, and a `text` property, to update its label.
 
 ### Coordinate system
 
@@ -121,7 +127,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-81 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+106 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions
