@@ -63,7 +63,10 @@ scripts/
     model.py             FieldModel   — game world state (no pygame)
     view.py              FieldView    — draws the world
   UI/
-    text.py              TextView     — cached-font text rendering
+    element.py           UIElement    — base interface for UI elements
+    text.py              TextView     — UI element: cached-font text
+    button.py            Button       — clickable rect with a TextView label
+    ui.py                UI           — owns the elements: update / input / draw
 ```
 
 ### The model/view rule
@@ -76,6 +79,20 @@ scripts/
   2. `update_physics` — mutates the models
   3. `render` — draws via the views
   4. `update_display` — flips the display, updates `dt`
+
+### The UI layer
+
+- Every UI element inherits from `UIElement` and implements `update`, `handle_input`,
+  `draw` and `reset`. This includes `TextView`, so text is a managed element too.
+- `UI` owns the elements and is the only place that updates them, feeds them input
+  and draws them. A new element is registered with `ui.add(element)`.
+- `App` delegates to it (`ui.handle_input` / `ui.update` / `ui.draw` / `ui.reset`).
+  Elements only change their own `hovered` / `clicked` state; `App` still performs the
+  actual model change in `update_physics`, so the model/view split stays intact.
+- `ui.reset()` clears each element's one-frame input state at the end of the frame, so
+  `App` never clears `button.clicked` by hand.
+- A `TextView` is created once and its content changed with `set_text` (which re-renders
+  the surface) instead of building a new one every frame — see `App.fps_text`.
 
 ### Coordinate system
 
@@ -100,7 +117,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-37 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+69 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

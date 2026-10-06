@@ -3,7 +3,9 @@ import pygame
 import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldModel, FieldView
+from scripts.UI.button import Button
 from scripts.UI.text import TextView
+from scripts.UI.ui import UI
 
 
 class App:
@@ -37,6 +39,14 @@ class App:
         self.camera_view = CameraView(self.camera_model)
         self.field_view = FieldView(self.field_model)
 
+        # Set UI variables
+        self.ui = UI()
+        self.button = Button("Reset", (20, 20), (120, 50))
+        self.fps_text = TextView("FPS: 0", (0, 0, 0), 20,
+                                 pos=(self.width - 70, self.height - 21), center=False)
+        self.ui.add(self.button)
+        self.ui.add(self.fps_text)
+
     def update(self) -> None:
         """
         Main update function of the program.
@@ -61,7 +71,7 @@ class App:
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:
-                    pass
+                    self.ui.handle_input(event)
                 elif event.button == 3:
                     pass
 
@@ -76,6 +86,8 @@ class App:
         Physics block.
         Calculate model from *Model classes.
         """
+
+        ### CAMERA MOVEMENT EXAMPLE: Move camera with arrow keys or WASD
         if self.keys[pygame.K_LEFT] or self.keys[pygame.K_a]:
             self.camera_model.move_left(1, self.dt)
         if self.keys[pygame.K_RIGHT] or self.keys[pygame.K_d]:
@@ -89,6 +101,13 @@ class App:
         if self.keys[pygame.K_q]:
             self.camera_model.scale_out(1, self.dt)
 
+        self.fps_text.set_text("FPS: " + str(int(self.clock.get_fps()))) # FPS TEXT EXAMPLE: Update FPS text
+
+        self.ui.update(self.mouse_pos)
+
+        if self.button.clicked:  # BUTTON EXAMPLE: Reset camera when button is clicked
+            print("Reset button clicked!")
+
     def render(self) -> None:
         """
         Rendering block.
@@ -98,16 +117,17 @@ class App:
 
         self.field_view.draw(self.screen, self.camera_model)
 
-        self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # Draw map scale
-        TextView("FPS: " + str(int(self.clock.get_fps())), (0, 0, 0), 20).print(self.screen,
-                                                                            (self.width - 70, self.height - 21),
-                                                                            False)  # FPS counter
+        self.ui.draw(self.screen)  # Draw UI
+
+        self.camera_view.draw_map_scale(self.screen, offset=(140, 15))  # MAP SCALE EXAMPLE: Draw map scale in top left corner
 
     def update_display(self) -> None:
         """
         Update block.
         Flips the display and updates the delta time.
         """
+        self.ui.reset()
+
         pygame.display.update()
 
         self.dt = self.clock.tick(self.fps)
