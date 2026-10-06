@@ -77,6 +77,10 @@ class App:
                 elif event.button == 3:
                     pass
 
+            if event.type == pygame.MOUSEBUTTONUP:  # If mouse button up...
+                if event.button == 1:
+                    self.ui.handle_input(event)
+
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
                     pass

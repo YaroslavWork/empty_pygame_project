@@ -87,8 +87,12 @@ scripts/
 - `UI` owns the elements and is the only place that updates them, feeds them input
   and draws them. A new element is registered with `ui.add(element)`.
 - `App` delegates to it (`ui.handle_input` / `ui.update` / `ui.draw` / `ui.reset`).
-  Elements only change their own `hovered` / `clicked` state; `App` still performs the
-  actual model change in `update_physics`, so the model/view split stays intact.
+  Elements only change their own `hovered` / `pressed` / `clicked` state; `App` still
+  performs the actual model change in `update_physics`, so the model/view split stays
+  intact.
+- A `Button` reports `clicked` only after a press that started on it is released on it.
+  `pressed` tracks the held press (`is_pressed` / `is_clicked` test the events), so a
+  release that was not preceded by a press on the button is not a click.
 - `ui.reset()` clears each element's one-frame input state at the end of the frame, so
   `App` never clears `button.clicked` by hand.
 - A `TextView` is created once and its content changed with `set_text` (which re-renders
@@ -117,7 +121,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-69 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+81 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

@@ -148,3 +148,23 @@ def test_click_is_handled_once_and_cleared_automatically(app):
     app.camera_model.x = 7
     app.update()
     assert app.camera_model.x == 7
+
+
+def test_release_inside_after_press_clicks_button(app):
+    center = app.button.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": center}))
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": center}))
+
+    app.handle_input()
+
+    assert app.button.clicked
+    assert not app.button.pressed
+
+
+def test_release_without_press_does_not_click_button(app):
+    center = app.button.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": center}))
+
+    app.handle_input()
+
+    assert not app.button.clicked
