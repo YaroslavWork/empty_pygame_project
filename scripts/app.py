@@ -41,7 +41,9 @@ class App:
 
         # Set UI variables
         self.ui = UI()
-        self.button = Button("Reset", (20, 20), (120, 50))
+
+        # ALL THIS SECTION BELOW IS JUST AN EXAMPLE OF HOW TO USE THE UI SYSTEM
+        self.button = Button("Test", (20, 20), (120, 50))
         self.fps_text = TextView("FPS: 0", (0, 0, 0), 20,
                                  pos=(self.width - 70, self.height - 21), center=False)
         self.ui.add(self.button)
@@ -105,8 +107,8 @@ class App:
 
         self.ui.update(self.mouse_pos)
 
-        if self.button.clicked:  # BUTTON EXAMPLE: Reset camera when button is clicked
-            print("Reset button clicked!")
+        if self.button.clicked:  # BUTTON EXAMPLE: Test button clicked
+            print("Test button clicked!")
 
     def render(self) -> None:
         """
