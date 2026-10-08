@@ -66,6 +66,7 @@ scripts/
     element.py           UIElement    — base interface for UI elements
     text.py              TextView     — UI element: cached-font text
     button.py            Button       — clickable rect with a TextView label
+    group.py             UIGroup      — container: groups elements, toggles them together
     ui.py                UI           — owns the elements: update / input / draw
 ```
 
@@ -97,6 +98,10 @@ scripts/
   `App` never clears `button.clicked` by hand.
 - Every element has a `visible` flag with `hide()` / `show()`. A hidden element draws
   nothing and never reacts to input.
+- `UIGroup` is a container element: `group.add(element)` collects elements into it and
+  `group.hide()` / `group.show()` (or `group.visible = ...`) toggles them all at once.
+  Register the group itself with `ui.add(group)`, so one call replaces adding every
+  child by hand. Groups nest, and a child added to a hidden group starts hidden.
 - A `Button` also has an `active` flag (`deactivate()` / `activate()`): an inactive
   button stays visible but is not pressable and shows no hover. Interaction needs the
   button to be both visible and active, so a hidden button is never pressable.
@@ -127,7 +132,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-106 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+123 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

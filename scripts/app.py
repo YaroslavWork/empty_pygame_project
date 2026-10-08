@@ -7,7 +7,6 @@ from scripts.UI.button import Button
 from scripts.UI.text import TextView
 from scripts.UI.ui import UI
 
-
 class App:
 
     def __init__(self) -> None:

@@ -2,6 +2,7 @@ import pygame
 
 from scripts.UI.button import Button
 from scripts.UI.element import UIElement
+from scripts.UI.group import UIGroup
 from scripts.UI.text import TextView
 from scripts.UI.ui import UI
 
@@ -110,3 +111,34 @@ def test_reset_resets_every_element():
 
     assert first.resets == 1
     assert second.resets == 1
+
+
+def test_ui_forwards_input_to_group_elements():
+    TextView.fonts = {}
+    ui = UI()
+    group = UIGroup()
+    button = Button("Reset", (10, 10), (100, 40))
+    group.add(button)
+    ui.add(group)
+    press = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)})
+    release = pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": (50, 30)})
+
+    ui.handle_input(press)
+    ui.handle_input(release)
+
+    assert button.clicked
+
+
+def test_ui_draws_nothing_for_a_hidden_group(screen):
+    TextView.fonts = {}
+    ui = UI()
+    group = UIGroup()
+    button = Button("Reset", (10, 10), (100, 40), color=(210, 210, 210))
+    group.add(button)
+    group.hide()
+    ui.add(group)
+    screen.fill((255, 255, 255))
+
+    ui.draw(screen)
+
+    assert screen.get_at((13, 30)) == pygame.Color(255, 255, 255)
