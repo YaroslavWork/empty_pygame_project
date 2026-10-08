@@ -47,6 +47,17 @@ def test_hud_settings_exist():
     assert len(s.HUD_FPS_MARGIN) == 2
 
 
+def test_ui_example_settings_exist():
+    assert s.UI_FONT_SIZE > 0
+    assert len(s.UI_BUTTON_POS) == 2
+    assert len(s.UI_BUTTON_SIZE) == 2
+    assert len(s.UI_INPUT_POS) == 2
+    assert len(s.UI_INPUT_SIZE) == 2
+    assert isinstance(s.UI_INPUT_PLACEHOLDER, str)
+    assert s.UI_INPUT_PLACEHOLDER
+    assert len(s.UI_NAME_TEXT_POS) == 2
+
+
 def test_net_settings_exist():
     assert isinstance(s.NET_HOST, str)
     assert s.NET_HOST

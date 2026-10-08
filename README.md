@@ -73,6 +73,11 @@ The empty camera already supports navigation, so you can see the structure work:
 | `E` | Zoom in |
 | `Q` | Zoom out |
 
+The UI examples in `app.py` react to the mouse too: the **Hide FPS** button toggles the
+FPS text, and the **input box** below it accepts typed text — click it, type a name and
+press `Enter`. The label under the box mirrors the content live, and the submitted name
+is written into the window caption.
+
 ## Structure
 
 Strict model/view split, one responsibility per class. Each feature lives in its
@@ -81,8 +86,8 @@ own package folder.
 ```
 main.py                  entry point, runs the App loop (--server / --connect)
 scripts/
-  settings.py            window, colors, camera/HUD/scale, network defaults
-  app.py                 App: orchestrates the frame, talks to a Client
+  settings.py            window, colors, camera/HUD/scale, UI examples, network defaults
+  app.py                 App: orchestrates the frame + example UI, talks to a Client
   world.py               WorldModel — owns the models, step/snapshot (no pygame)
   camera/
     model.py             CameraModel  — position, zoom, coordinate math (no pygame)
@@ -95,7 +100,12 @@ scripts/
     client.py            Client / LocalClient / NetClient
     server.py            authoritative asyncio server
   UI/
-    text.py              TextView     — cached-font text rendering
+    element.py           UIElement    — base interface for UI elements
+    text.py              TextView     — UI element: cached-font text
+    button.py            Button       — clickable rect with a TextView label
+    input_field.py       InputField   — text box: hover, focus, typing
+    group.py             UIGroup      — container: groups elements, toggles them together
+    ui.py                UI           — owns the elements: update / input / draw
 ```
 
 ### The model/view rule
@@ -108,6 +118,45 @@ scripts/
   2. `update_physics` — sends intents to the `Client`, applies the snapshot
   3. `render` — draws via the views
   4. `update_display` — flips the display, updates `dt`
+
+### The UI layer
+
+- Every UI element inherits from `UIElement` and implements `update`, `handle_input`,
+  `draw` and `reset`. This includes `TextView`, so text is a managed element too.
+- `UI` owns the elements and is the only place that updates them, feeds them input
+  and draws them. A new element is registered with `ui.add(element)`.
+- `App` delegates to it (`ui.handle_input` / `ui.update` / `ui.draw` / `ui.reset`).
+  Elements only change their own `hovered` / `pressed` / `clicked` state; `App` still
+  performs the actual model change in `update_physics`, so the model/view split stays
+  intact.
+- A `Button` reports `clicked` only after a press that started on it is released on it.
+  `pressed` tracks the held press (`is_pressed` / `is_clicked` test the events), so a
+  release that was not preceded by a press on the button is not a click.
+- `ui.reset()` clears each element's one-frame input state at the end of the frame, so
+  `App` never clears `button.clicked` by hand.
+- Every element has a `visible` flag with `hide()` / `show()`. A hidden element draws
+  nothing and never reacts to input.
+- `UIGroup` is a container element: `group.add(element)` collects elements into it and
+  `group.hide()` / `group.show()` (or `group.visible = ...`) toggles them all at once.
+  Register the group itself with `ui.add(group)`, so one call replaces adding every
+  child by hand. Groups nest, and a child added to a hidden group starts hidden.
+- A `Button` also has an `active` flag (`deactivate()` / `activate()`): an inactive
+  button stays visible but is not pressable and shows no hover. Interaction needs the
+  button to be both visible and active, so a hidden button is never pressable.
+- An `InputField` is a text box: hovering highlights it, clicking inside focuses it and
+  it then accepts typed characters. `get_text()` (or the `text` property) reads back what
+  the user typed, `clear()` empties it, `focus()` / `unfocus()` do the same from code,
+  `K_BACKSPACE` deletes the last character, `K_RETURN` sets the one-frame `submitted`
+  flag and `K_ESCAPE` stops editing. It reuses `Button`'s `active` (enabled), `visible`
+  and `reset()` semantics - hiding or deactivating it also stops the editing - so it can
+  live in a `UIGroup` like any other element. Characters arrive as `pygame.TEXTINPUT`
+  and control keys as `KEYDOWN`; `App.handle_input` forwards both to `ui.handle_input`.
+  `app.py` ships a small **marked example**: `self.name_field` is an `InputField` and
+  `self.name_text` is a `TextView` that mirrors its content, while `Enter` writes the
+  submitted name into the window caption.
+- A `TextView` is created once and its content changed with `set_text` (which re-renders
+  the surface) instead of building a new one every frame — see `App.fps_text`. A
+  `Button` exposes the same `set_text`, and a `text` property, to update its label.
 
 ### Coordinate system
 
@@ -133,7 +182,7 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-90 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+244 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
 
 ## Conventions

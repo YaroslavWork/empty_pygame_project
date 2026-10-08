@@ -5,6 +5,10 @@ from scripts.app import App
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldModel, FieldView
 from scripts.net.client import Client, LocalClient
+from scripts.UI.button import Button
+from scripts.UI.input_field import InputField
+from scripts.UI.text import TextView
+from scripts.UI.ui import UI
 from scripts.world import WorldModel
 
 
@@ -160,3 +164,128 @@ def test_update_runs_all_blocks(app):
     app.update()
 
     assert app.mouse_pos is not None
+
+
+def test_app_wires_a_ui_manager(app):
+    assert isinstance(app.ui, UI)
+
+
+def test_app_wires_a_button(app):
+    assert isinstance(app.button, Button)
+    assert isinstance(app.button.text_view, TextView)
+    assert app.button in app.ui.elements
+
+
+def test_app_wires_a_fps_text(app):
+    assert isinstance(app.fps_text, TextView)
+    assert app.fps_text in app.ui.elements
+
+
+def test_app_wires_an_input_field_example(app):
+    assert isinstance(app.name_field, InputField)
+    assert app.name_field in app.ui.elements
+
+
+def test_app_wires_the_input_field_example_label(app):
+    assert isinstance(app.name_text, TextView)
+    assert app.name_text in app.ui.elements
+
+
+def test_example_input_field_mirrors_the_typed_text(app):
+    before = app.name_text.text_surface.get_width()
+    center = app.name_field.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": center}))
+    pygame.event.post(pygame.event.Event(pygame.TEXTINPUT, {"text": "Bob"}))
+
+    app.handle_input()
+    app.update_physics()
+
+    assert app.name_field.get_text() == "Bob"
+    assert app.name_text.text_surface.get_width() > before
+
+
+def test_example_input_field_submits_the_name_into_the_caption(app):
+    center = app.name_field.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": center}))
+    pygame.event.post(pygame.event.Event(pygame.TEXTINPUT, {"text": "Bob"}))
+    pygame.event.post(pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RETURN}))
+
+    app.handle_input()
+    app.update_physics()
+
+    assert pygame.display.get_caption()[0].endswith("Bob")
+
+
+def test_render_reuses_the_same_fps_text(app):
+    before = app.fps_text
+
+    app.render()
+    app.render()
+
+    assert app.fps_text is before
+    assert app.fps_text.text_surface.get_width() > 0
+
+
+def test_button_click_hides_the_fps_text(app):
+    app.keys = FakeKeys()
+    app.button.clicked = True
+
+    app.update_physics()
+
+    assert not app.fps_text.visible
+    assert app.button.text == "Show FPS"
+
+
+def test_button_click_shows_the_fps_text_again(app):
+    app.keys = FakeKeys()
+    app.fps_text.hide()
+    app.button.clicked = True
+
+    app.update_physics()
+
+    assert app.fps_text.visible
+    assert app.button.text == "Hide FPS"
+
+
+def test_update_does_not_reset_camera_without_click(app):
+    app.dt = 1000
+    app.keys = FakeKeys()
+    app.camera_model.x = 5
+    app.camera_model.y = 5
+    app.camera_model.distance = 100
+
+    app.update()
+
+    assert (app.camera_model.x, app.camera_model.y, app.camera_model.distance) == (5, 5, 100)
+
+
+def test_click_is_handled_once_and_cleared_automatically(app):
+    app.keys = FakeKeys()
+    app.button.clicked = True
+
+    app.update()
+    assert not app.fps_text.visible
+    assert not app.button.clicked
+
+    app.update()
+    assert not app.fps_text.visible
+
+
+def test_release_inside_after_press_clicks_button(app):
+    center = app.button.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": center}))
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": center}))
+
+    app.handle_input()
+
+    assert app.button.clicked
+    assert not app.button.pressed
+
+
+def test_release_without_press_does_not_click_button(app):
+    center = app.button.rect.center
+    pygame.event.post(pygame.event.Event(pygame.MOUSEBUTTONUP, {"button": 1, "pos": center}))
+
+    app.handle_input()
+
+    assert not app.button.clicked

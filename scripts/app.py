@@ -4,7 +4,10 @@ import scripts.settings as s
 from scripts.camera import CameraModel, CameraView
 from scripts.field import FieldView
 from scripts.net.client import Client, LocalClient
+from scripts.UI.button import Button
+from scripts.UI.input_field import InputField
 from scripts.UI.text import TextView
+from scripts.UI.ui import UI
 from scripts.world import WorldModel
 
 
@@ -45,6 +48,26 @@ class App:
         self.camera_view = CameraView(self.camera_model)
         self.field_view = FieldView(self.field_model)
 
+        # Set UI variables
+        self.ui = UI()
+
+        # ALL THIS SECTION BELOW IS JUST AN EXAMPLE OF HOW TO USE THE UI SYSTEM
+        self.button = Button("Hide FPS", s.UI_BUTTON_POS, s.UI_BUTTON_SIZE, size_font=s.UI_FONT_SIZE)
+        self.fps_text = TextView("FPS: 0", self.colors['text'], s.HUD_FONT_SIZE,
+                                 pos=(self.width - s.HUD_FPS_MARGIN[0], self.height - s.HUD_FPS_MARGIN[1]),
+                                 center=False)
+        self.ui.add(self.button)
+        self.ui.add(self.fps_text)
+
+        # INPUT FIELD EXAMPLE: click the box, type a name and press Enter.
+        # The label under the box mirrors the content, the caption shows it on Enter.
+        self.name_field = InputField(s.UI_INPUT_POS, s.UI_INPUT_SIZE, placeholder=s.UI_INPUT_PLACEHOLDER,
+                                     size_font=s.UI_FONT_SIZE)
+        self.name_text = TextView("Hello!", self.colors['text'], s.UI_FONT_SIZE,
+                                  pos=s.UI_NAME_TEXT_POS, center=False)
+        self.ui.add(self.name_field)
+        self.ui.add(self.name_text)
+
     def update(self) -> None:
         """
         Main update function of the program.
@@ -69,13 +92,22 @@ class App:
 
             if event.type == pygame.MOUSEBUTTONDOWN:  # If mouse button down...
                 if event.button == 1:
-                    pass
+                    self.ui.handle_input(event)
                 elif event.button == 3:
                     pass
+
+            if event.type == pygame.MOUSEBUTTONUP:  # If mouse button up...
+                if event.button == 1:
+                    self.ui.handle_input(event)
+
+            if event.type == pygame.TEXTINPUT:  # If a character was typed...
+                self.ui.handle_input(event)  # Give it to the UI (used by InputField)
 
             if event.type == pygame.KEYDOWN:  # If key button down...
                 if event.key == pygame.K_SPACE:
                     pass
+                else:
+                    self.ui.handle_input(event)  # Give it to the UI (used by InputField)
 
         self.keys = pygame.key.get_pressed()  # Get all keys (pressed or not)
         self.intents = self.collect_intents()  # Collect intents from keys
@@ -112,6 +144,28 @@ class App:
         if snapshot is not None:
             self.world.apply_snapshot(snapshot)
 
+        self.fps_text.set_text("FPS: " + str(int(self.clock.get_fps())))  # FPS TEXT EXAMPLE: Update FPS text
+
+        self.ui.update(self.mouse_pos)
+
+        if self.button.clicked:  # BUTTON EXAMPLE: Hide/show fps text button
+            if self.fps_text.visible:
+                self.fps_text.hide()
+                self.button.set_text("Show FPS")
+            else:
+                self.fps_text.show()
+                self.button.set_text("Hide FPS")
+
+        # INPUT FIELD EXAMPLE: show the typed content in the label under the box...
+        typed_text = self.name_field.get_text()  # Read what the user typed inside
+        if typed_text:
+            self.name_text.set_text("Hello, " + typed_text + "!")
+        else:
+            self.name_text.set_text("Hello!")
+
+        if self.name_field.submitted:  # INPUT FIELD EXAMPLE: Enter shows it in the caption
+            pygame.display.set_caption(self.name + " - " + typed_text)
+
     def render(self) -> None:
         """
         Rendering block.
@@ -121,18 +175,17 @@ class App:
 
         self.field_view.draw(self.screen, self.camera_model)
 
+        self.ui.draw(self.screen)  # Draw UI
+
         self.camera_view.draw_map_scale(self.screen, offset=s.HUD_SCALE_OFFSET)  # Draw map scale
-        fps_text = "FPS: " + str(int(self.clock.get_fps()))
-        TextView(fps_text, self.colors['text'], s.HUD_FONT_SIZE).print(
-            self.screen,
-            (self.width - s.HUD_FPS_MARGIN[0], self.height - s.HUD_FPS_MARGIN[1]),
-            False)  # FPS counter
 
     def update_display(self) -> None:
         """
         Update block.
         Flips the display and updates the delta time.
         """
+        self.ui.reset()
+
         pygame.display.update()
 
         self.dt = self.clock.tick(self.fps)
