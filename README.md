@@ -46,6 +46,11 @@ The empty camera already supports navigation, so you can see the structure work:
 | `E` | Zoom in |
 | `Q` | Zoom out |
 
+The UI examples in `app.py` react to the mouse too: the **Hide FPS** button toggles the
+FPS text, and the **input box** below it accepts typed text — click it, type a name and
+press `Enter`. The label under the box mirrors the content live, and the submitted name
+is written into the window caption.
+
 ## Structure
 
 Strict model/view split, one responsibility per class. Each feature lives in its
@@ -55,7 +60,7 @@ own package folder.
 main.py                  entry point, runs the App loop
 scripts/
   settings.py            window size, name, FPS, colors
-  app.py                 App: orchestrates the frame
+  app.py                 App: orchestrates the frame + example UI
   camera/
     model.py             CameraModel  — position, zoom, coordinate math (no pygame)
     view.py              CameraView   — draws the map scale
@@ -66,6 +71,7 @@ scripts/
     element.py           UIElement    — base interface for UI elements
     text.py              TextView     — UI element: cached-font text
     button.py            Button       — clickable rect with a TextView label
+    input_field.py       InputField   — text box: hover, focus, typing
     group.py             UIGroup      — container: groups elements, toggles them together
     ui.py                UI           — owns the elements: update / input / draw
 ```
@@ -105,6 +111,17 @@ scripts/
 - A `Button` also has an `active` flag (`deactivate()` / `activate()`): an inactive
   button stays visible but is not pressable and shows no hover. Interaction needs the
   button to be both visible and active, so a hidden button is never pressable.
+- An `InputField` is a text box: hovering highlights it, clicking inside focuses it and
+  it then accepts typed characters. `get_text()` (or the `text` property) reads back what
+  the user typed, `clear()` empties it, `focus()` / `unfocus()` do the same from code,
+  `K_BACKSPACE` deletes the last character, `K_RETURN` sets the one-frame `submitted`
+  flag and `K_ESCAPE` stops editing. It reuses `Button`'s `active` (enabled), `visible`
+  and `reset()` semantics - hiding or deactivating it also stops the editing - so it can
+  live in a `UIGroup` like any other element. Characters arrive as `pygame.TEXTINPUT`
+  and control keys as `KEYDOWN`; `App.handle_input` forwards both to `ui.handle_input`.
+  `app.py` ships a small **marked example**: `self.name_field` is an `InputField` and
+  `self.name_text` is a `TextView` that mirrors its content, while `Enter` writes the
+  submitted name into the window caption.
 - A `TextView` is created once and its content changed with `set_text` (which re-renders
   the surface) instead of building a new one every frame — see `App.fps_text`. A
   `Button` exposes the same `set_text`, and a `text` property, to update its label.
@@ -132,8 +149,12 @@ across the window width; a larger `distance` = zoomed out.
 .venv/bin/pytest
 ```
 
-123 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
+189 tests run headless (`conftest.py` forces `SDL_VIDEODRIVER=dummy`), so they
 work in a terminal or CI without a display.
+
+Two of the `tests/test_app.py` tests are currently out of date with the example
+(`test_button_click_resets_camera`, `test_click_is_handled_once_and_cleared_automatically`):
+the example button now toggles the FPS text instead of resetting the camera.
 
 ## Conventions
 

@@ -3,6 +3,7 @@ import pygame
 from scripts.UI.button import Button
 from scripts.UI.element import UIElement
 from scripts.UI.group import UIGroup
+from scripts.UI.input_field import InputField
 from scripts.UI.text import TextView
 from scripts.UI.ui import UI
 
@@ -142,3 +143,54 @@ def test_ui_draws_nothing_for_a_hidden_group(screen):
     ui.draw(screen)
 
     assert screen.get_at((13, 30)) == pygame.Color(255, 255, 255)
+
+
+def test_ui_forwards_typing_to_a_focused_input_field():
+    TextView.fonts = {}
+    ui = UI()
+    field = InputField((10, 10), (100, 40))
+    ui.add(field)
+
+    ui.handle_input(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)}))
+    ui.handle_input(pygame.event.Event(pygame.TEXTINPUT, {"text": "hi"}))
+
+    assert field.get_text() == "hi"
+
+
+def test_ui_reset_clears_the_submitted_flag_of_an_input_field():
+    TextView.fonts = {}
+    ui = UI()
+    field = InputField((10, 10), (100, 40))
+    ui.add(field)
+    field.focus()
+    ui.handle_input(pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RETURN}))
+
+    ui.reset()
+
+    assert not field.submitted
+
+
+def test_ui_draws_nothing_for_a_hidden_input_field(screen):
+    TextView.fonts = {}
+    ui = UI()
+    field = InputField((10, 10), (100, 40), color=(210, 210, 210))
+    field.hide()
+    ui.add(field)
+    screen.fill((255, 255, 255))
+
+    ui.draw(screen)
+
+    assert screen.get_at((13, 30)) == pygame.Color(255, 255, 255)
+
+
+def test_ui_routes_a_click_to_an_input_field_inside_a_group():
+    TextView.fonts = {}
+    ui = UI()
+    group = UIGroup()
+    field = InputField((10, 10), (100, 40))
+    group.add(field)
+    ui.add(group)
+
+    ui.handle_input(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {"button": 1, "pos": (50, 30)}))
+
+    assert field.focused
