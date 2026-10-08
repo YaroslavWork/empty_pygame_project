@@ -41,4 +41,5 @@ UI_NAME_TEXT_POS = (20, 150)
 NET_HOST = "127.0.0.1"
 NET_PORT = 5000
 NET_BUFFER_SIZE = 4096
+NET_INTERP_MS = 50  # Render the world this many ms behind the server tick (see InterpolatingClient)
 

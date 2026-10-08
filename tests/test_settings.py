@@ -63,3 +63,4 @@ def test_net_settings_exist():
     assert s.NET_HOST
     assert 0 < s.NET_PORT < 65536
     assert s.NET_BUFFER_SIZE > 0
+    assert s.NET_INTERP_MS >= 0

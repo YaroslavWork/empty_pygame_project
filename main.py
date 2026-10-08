@@ -4,7 +4,7 @@ import argparse
 
 from scripts import settings as s
 from scripts.app import App
-from scripts.net.client import NetClient
+from scripts.net.client import InterpolatingClient, NetClient
 from scripts.net.server import run as run_server
 
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         run_server()
     elif args.connect:
         host, port = args.connect.rsplit(":", 1)
-        app = App(client=NetClient(host, int(port)))
+        app = App(client=InterpolatingClient(NetClient(host, int(port))))
     else:
         app = App()
 

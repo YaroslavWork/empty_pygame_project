@@ -2,6 +2,7 @@ import socket
 
 from scripts import settings as s
 from scripts.net import protocol
+from scripts.net.interpolation import SnapshotBuffer
 
 
 class Client:
@@ -71,4 +72,32 @@ class NetClient(Client):
 
     def close(self) -> None:
         self.socket.close()
+
+
+class InterpolatingClient(Client):
+    """
+    Client that wraps another client and smooths its snapshots in time.
+    It keeps the last two snapshots and renders the world slightly in the past
+    (see SnapshotBuffer), so networked state stops snapping at the tick rate.
+    It returns a plain snapshot dict, so App and the models need no changes.
+    """
+
+    def __init__(self, client, interval_ms=s.NET_INTERP_MS) -> None:
+        self.client = client
+        self.buffer = SnapshotBuffer(interval_ms)
+        self.last_received = None
+
+    def update(self, dt, intents):
+        snapshot = self.client.update(dt, intents)
+
+        if snapshot is not None and snapshot is not self.last_received:  # a new packet arrived
+            self.buffer.push(snapshot)
+            self.last_received = snapshot
+
+        self.buffer.advance(dt)
+
+        return self.buffer.sample()
+
+    def close(self) -> None:
+        self.client.close()
 
